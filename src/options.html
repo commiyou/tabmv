@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>tabmv rules</title>
+  <title>tabmv</title>
   <link rel="stylesheet" href="ui.css" />
   <style>
     body { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
@@ -15,49 +15,51 @@
   </style>
 </head>
 <body>
-  <h2>tabmv 规则</h2>
-  <p class="muted">平时用侧边栏就够了，这里给需要批量编辑的人。每行一条：<code>网址匹配 =&gt; 标签名 [; icon=…] [; color=…]</code>，从上到下第一条命中生效，<code>#</code> 开头为注释。⌘/Ctrl+S 保存。</p>
+  <div class="row"><h2 class="grow" data-i18n="o_title"></h2><a id="tutorial" target="_blank" data-i18n="o_tutorial"></a></div>
+  <p class="muted" data-i18n-html="o_intro"></p>
   <textarea id="rules" spellcheck="false"></textarea>
   <div class="row" style="margin-top: 6px">
-    <button id="save" class="primary">保存</button>
+    <button id="save" class="primary" data-i18n="o_save"></button>
     <span id="msg" class="muted"></span>
   </div>
   <div id="errors" class="err"></div>
 
-  <h3>测试</h3>
+  <h3 data-i18n="o_test"></h3>
   <div class="row">
     <input id="tUrl" type="text" class="mono grow" placeholder="URL" />
-    <input id="tTitle" type="text" class="grow" style="max-width: 260px" placeholder="原标题" />
+    <input id="tTitle" type="text" class="grow" style="max-width: 260px" data-i18n-placeholder="o_test_title" />
   </div>
   <div id="tOut" class="preview mono"></div>
 
-  <h3>已打开标签预览</h3>
-  <table><thead><tr><th>行</th><th>原标题</th><th>新标题</th><th>icon / color</th></tr></thead><tbody id="tabs"></tbody></table>
+  <h3 data-i18n="o_tabs"></h3>
+  <table><thead><tr><th data-i18n="o_col_line"></th><th data-i18n="o_col_orig"></th><th data-i18n="o_col_new"></th><th>icon / color</th></tr></thead><tbody id="tabs"></tbody></table>
 
-  <h3>语法</h3>
+  <h3 data-i18n="o_syntax"></h3>
   <table class="help">
-    <tr><td><code>*</code> <code>?</code> <code>[a-z]</code> <code>[!&amp;]</code></td><td>glob，整串匹配（anchored）；<code>*</code> 最短匹配；<code>\</code> 转义</td></tr>
-    <tr><td><code>{a,b}</code> <code>(a|b)</code></td><td>选择；<code>( )</code> 是捕获组，和 zmv 一样引用：<code>{1}</code> 或 <code>$1</code></td></tr>
-    <tr><td>无 <code>( )</code> 时</td><td>每个 <code>*</code> / <code>?</code> / <code>[…]</code> 自动成为捕获组（zmv -W）</td></tr>
-    <tr><td><code>(#i)</code></td><td>前缀，忽略大小写（zsh glob flag）</td></tr>
-    <tr><td><code>/regex/i</code></td><td>JS 正则，部分匹配；支持 <code>(?&lt;name&gt;…)</code> → <code>{&lt;name&gt;}</code></td></tr>
-    <tr><td><code>title:</code></td><td>前缀，匹配原标题而不是 URL</td></tr>
-    <tr><td colspan="2"><b>标签名</b>：普通文字照原样显示，<code>{…}</code> 是一段可变内容，<code>{{</code> <code>}}</code> 表示花括号本身</td></tr>
-    <tr><td><code>{page ".title"}</code></td><td>页面上第一个匹配这个 CSS 选择器的元素的文字（侧边栏点选会自动生成）</td></tr>
-    <tr><td><code>{?env}</code></td><td>网址参数（也查 <code>#/route?env=</code>）</td></tr>
-    <tr><td><code>{host} {host[1]} {host[-2]}</code></td><td>域名 / 第 1 段 / 倒数第 2 段</td></tr>
-    <tr><td><code>{path} {path[2]}</code></td><td>路径 / 第 2 段</td></tr>
-    <tr><td><code>{title} {url}</code></td><td>原标题、完整网址</td></tr>
-    <tr><td><code>{1} {&lt;name&gt;}</code></td><td>网址匹配里的第 1 个捕获组 / 正则命名组</td></tr>
-    <tr><td><code>A or B or "文字"</code></td><td>取不到就用后面的。页面元素还没渲染时先用后面的，渲染出来后自动换回</td></tr>
-    <tr><td><code>before "." after "-"</code></td><td>只要分隔符前面 / 后面的部分</td></tr>
-    <tr><td><code>match /#(\d+)/</code></td><td>按正则取出括号里的部分；没匹配到算取不到</td></tr>
-    <tr><td><code>replace /re/ "x"</code> <code>upper lower trim max 20</code></td><td>替换、大小写、去空白、截断</td></tr>
-    <tr><td>旧写法</td><td><code>$1</code> <code>$title</code> <code>${q.env|before:.}</code> <code>${sel:h1 || 1}</code> 仍然可用</td></tr>
-    <tr><td><code>icon=</code></td><td>emoji、<code>letter</code>（新标题首字）、1–2 个字符、图片 URL、<code>none</code></td></tr>
-    <tr><td><code>color=</code></td><td>CSS 颜色或 <code>auto</code>（按第 1 个捕获组算出固定颜色）；只给 color 时在原图标右下角加色点</td></tr>
+    <tr><td colspan="2" data-i18n-html="h_match"></td></tr>
+    <tr><td><code>*</code> <code>?</code> <code>[a-z]</code> <code>[!&amp;]</code></td><td data-i18n-html="h_glob"></td></tr>
+    <tr><td><code>{a,b}</code> <code>(a|b)</code></td><td data-i18n-html="h_alt"></td></tr>
+    <tr><td data-i18n-html="h_auto_k"></td><td data-i18n-html="h_auto"></td></tr>
+    <tr><td><code>(#i)</code></td><td data-i18n-html="h_case"></td></tr>
+    <tr><td><code>/regex/i</code></td><td data-i18n-html="h_regex"></td></tr>
+    <tr><td><code>title:</code></td><td data-i18n-html="h_titlef"></td></tr>
+    <tr><td colspan="2" data-i18n-html="h_name"></td></tr>
+    <tr><td><code>{page ".title"}</code></td><td data-i18n-html="h_page"></td></tr>
+    <tr><td><code>{?env}</code></td><td data-i18n-html="h_param"></td></tr>
+    <tr><td><code>{host} {host[1]} {host[-2]}</code></td><td data-i18n-html="h_host"></td></tr>
+    <tr><td><code>{path} {path[2]}</code></td><td data-i18n-html="h_path"></td></tr>
+    <tr><td><code>{title} {url}</code></td><td data-i18n-html="h_titlev"></td></tr>
+    <tr><td><code>{1} {&lt;name&gt;}</code></td><td data-i18n-html="h_cap"></td></tr>
+    <tr><td><code>A or B or "text"</code></td><td data-i18n-html="h_or"></td></tr>
+    <tr><td><code>before "." after "-"</code></td><td data-i18n-html="h_cut"></td></tr>
+    <tr><td><code>match /#(\d+)/</code></td><td data-i18n-html="h_matchf"></td></tr>
+    <tr><td><code>replace /re/ "x"</code> <code>upper lower trim max 20</code></td><td data-i18n-html="h_more"></td></tr>
+    <tr><td data-i18n-html="h_old_k"></td><td data-i18n-html="h_old"></td></tr>
+    <tr><td><code>icon=</code></td><td data-i18n-html="h_icon"></td></tr>
+    <tr><td><code>color=</code></td><td data-i18n-html="h_color"></td></tr>
   </table>
 
+  <script src="i18n.js"></script>
   <script src="rules.js"></script>
   <script src="store.js"></script>
   <script src="options.js"></script>

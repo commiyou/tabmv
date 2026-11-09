@@ -1,0 +1,452 @@
+{
+  "extName": {
+    "message": "tabmv – Rename Tabs by URL & Page Text"
+  },
+  "extDesc": {
+    "message": "Name tabs from page text, URL parts and the original title, and color their icons. zmv-style glob and regex rules."
+  },
+  "actionTitle": {
+    "message": "tabmv: rename this tab"
+  },
+  "cmdOpen": {
+    "message": "Open the rename panel"
+  },
+  "color_none": {
+    "message": "None"
+  },
+  "color_auto": {
+    "message": "Auto color"
+  },
+  "icon_original": {
+    "message": "Original"
+  },
+  "icon_letter": {
+    "message": "Initial"
+  },
+  "sep_space": {
+    "message": "a space"
+  },
+  "sep_quote": {
+    "message": "“$1”"
+  },
+  "url_host_n": {
+    "message": "domain part $1"
+  },
+  "url_host": {
+    "message": "whole domain"
+  },
+  "url_path_n": {
+    "message": "path part $1"
+  },
+  "url_path": {
+    "message": "whole path"
+  },
+  "url_param": {
+    "message": "parameter $1"
+  },
+  "src_page": {
+    "message": "text on the page"
+  },
+  "src_title": {
+    "message": "original title"
+  },
+  "src_url": {
+    "message": "URL $1"
+  },
+  "src_url_value": {
+    "message": "URL $1 ($2)"
+  },
+  "src_capture": {
+    "message": "match group $1"
+  },
+  "cut_full": {
+    "message": "Use all of it"
+  },
+  "cut_before": {
+    "message": "Only the part before $1"
+  },
+  "cut_after": {
+    "message": "Only the part after $1"
+  },
+  "cut_regex": {
+    "message": "Extract with a regex…"
+  },
+  "cut_regex_ph": {
+    "message": "The part in parentheses is kept, e.g. #(\\d+)"
+  },
+  "fb_none": {
+    "message": "Leave empty"
+  },
+  "fb_url": {
+    "message": "Use URL $1 ($2)"
+  },
+  "fb_title": {
+    "message": "Use the original title"
+  },
+  "fb_text": {
+    "message": "Show some text…"
+  },
+  "card_missing": {
+    "message": "(not available right now)"
+  },
+  "card_where": {
+    "message": "Where"
+  },
+  "card_repick": {
+    "message": "👆 Pick again"
+  },
+  "card_which": {
+    "message": "Which part"
+  },
+  "card_cut": {
+    "message": "Keep"
+  },
+  "card_fb_ph": {
+    "message": "e.g. Loading"
+  },
+  "card_fallback": {
+    "message": "If missing"
+  },
+  "card_fb_hint": {
+    "message": "Used while the page is still loading, or when a redesign removes this text."
+  },
+  "card_delete": {
+    "message": "Remove"
+  },
+  "card_done": {
+    "message": "Done"
+  },
+  "url_none": {
+    "message": "This page has no usable URL."
+  },
+  "url_tip": {
+    "message": "Click the part you want:"
+  },
+  "url_empty": {
+    "message": "(empty)"
+  },
+  "scope_tab": {
+    "message": "Only this tab (until it is closed)"
+  },
+  "scope_site": {
+    "message": "All pages on $1"
+  },
+  "scope_path": {
+    "message": "Pages under $1"
+  },
+  "scope_param": {
+    "message": "Any site, URLs containing $1="
+  },
+  "scope_custom": {
+    "message": "Custom match…"
+  },
+  "icon_sum_letter": {
+    "message": "title initial"
+  },
+  "icon_sum_dot": {
+    "message": "color dot"
+  },
+  "icon_sum_none": {
+    "message": "unchanged"
+  },
+  "empty_title": {
+    "message": "(empty)"
+  },
+  "check_err": {
+    "message": "Problem: $1"
+  },
+  "check_out": {
+    "message": "⚠ This page is outside the range, so it will not change"
+  },
+  "check_in": {
+    "message": "✓ This page is in range"
+  },
+  "chip_missing": {
+    "message": "$1: not available, left empty"
+  },
+  "chip_fallback": {
+    "message": "$1 is not available; using $2"
+  },
+  "note_fallback": {
+    "message": "When $1 is missing, use $2"
+  },
+  "note_now": {
+    "message": " (happening now)"
+  },
+  "sum_manual": {
+    "message": "Saves your hand-written rule: "
+  },
+  "sum_where_site": {
+    "message": "every page on $1"
+  },
+  "sum_where_path": {
+    "message": "pages under $1"
+  },
+  "sum_where_param": {
+    "message": "pages whose URL contains $1="
+  },
+  "sum_where_custom": {
+    "message": "pages matching $1"
+  },
+  "sum_tab_shows": {
+    "message": "This tab will read "
+  },
+  "sum_rule_shows": {
+    "message": "On $1, the tab will read "
+  },
+  "sum_quote": {
+    "message": "“$1”"
+  },
+  "sum_empty": {
+    "message": " (an empty name keeps the original title)"
+  },
+  "sum_updates": {
+    "message": "· Saving updates the rule that is active now"
+  },
+  "sum_out": {
+    "message": "· but this page is outside the range"
+  },
+  "now_manual": {
+    "message": "Original title “$1” · renamed by hand"
+  },
+  "now_clear": {
+    "message": "Clear"
+  },
+  "now_rule": {
+    "message": "Original title “$1” · set by the rule shown below"
+  },
+  "now_pause": {
+    "message": "Pause this rule"
+  },
+  "now_none": {
+    "message": "Original title “$1”"
+  },
+  "btn_tab": {
+    "message": "Rename this tab"
+  },
+  "btn_update": {
+    "message": "Update rule"
+  },
+  "btn_save": {
+    "message": "Save rule"
+  },
+  "btn_save_new": {
+    "message": "Save as new rule"
+  },
+  "msg_tab_saved": {
+    "message": "Done. This applies to this tab only"
+  },
+  "msg_updated": {
+    "message": "Rule updated"
+  },
+  "msg_saved": {
+    "message": "Saved. Matching tabs update now"
+  },
+  "msg_reset": {
+    "message": "Restored"
+  },
+  "msg_rule_changed": {
+    "message": "The rules just changed; please use the rules page"
+  },
+  "msg_paused": {
+    "message": "Paused. Remove the # at the start of the line on the rules page to resume"
+  },
+  "pick": {
+    "message": "👆 Text on the page"
+  },
+  "pick_cancel": {
+    "message": "✋ Cancel (click some text on the page)"
+  },
+  "msg_many": {
+    "message": "$1 places match; the first one is used"
+  },
+  "adv_edited": {
+    "message": "Edited by hand; saving uses this text as is."
+  },
+  "adv_undo": {
+    "message": "Undo edits"
+  },
+  "p_preview": {
+    "message": "Preview of the tab"
+  },
+  "p_blocked": {
+    "message": "Extensions cannot change this page (browser settings, the Web Store, …). Try a normal web page."
+  },
+  "p_name": {
+    "message": "Tab name"
+  },
+  "p_name_ph": {
+    "message": "Type a name, or insert pieces below"
+  },
+  "p_from_url": {
+    "message": "🔗 Part of the URL"
+  },
+  "p_add_title": {
+    "message": "📄 Original title"
+  },
+  "p_apply": {
+    "message": "Apply to"
+  },
+  "p_icon": {
+    "message": "Icon"
+  },
+  "p_dot": {
+    "message": "Color dot"
+  },
+  "p_replace": {
+    "message": "Replace with"
+  },
+  "p_icon_ph": {
+    "message": "Another emoji, 1–2 letters, or an image URL"
+  },
+  "p_reset": {
+    "message": "Restore"
+  },
+  "p_adv": {
+    "message": "Advanced: rule text"
+  },
+  "p_manage": {
+    "message": "Manage all rules →"
+  },
+  "picker_bar": {
+    "message": "Click the text to use as the tab name · <kbd>↑</kbd> wider · <kbd>↓</kbd> narrower · <kbd>Esc</kbd> cancel"
+  },
+  "picker_notext": {
+    "message": "(no text here)"
+  },
+  "colon": {
+    "message": ": "
+  },
+  "o_title": {
+    "message": "tabmv rules"
+  },
+  "o_intro": {
+    "message": "The side panel covers everyday use; this page is for editing many rules at once. One rule per line: <code>URL match =&gt; tab name [; icon=…] [; color=…]</code>. The first matching line wins, and lines starting with <code>#</code> are comments. ⌘/Ctrl+S saves."
+  },
+  "o_save": {
+    "message": "Save"
+  },
+  "o_test": {
+    "message": "Try it"
+  },
+  "o_test_title": {
+    "message": "Original title"
+  },
+  "o_tabs": {
+    "message": "Open tabs"
+  },
+  "o_col_line": {
+    "message": "Line"
+  },
+  "o_col_orig": {
+    "message": "Original"
+  },
+  "o_col_new": {
+    "message": "New title"
+  },
+  "o_syntax": {
+    "message": "Syntax"
+  },
+  "o_tutorial": {
+    "message": "Tutorial →"
+  },
+  "o_unsaved": {
+    "message": "Not saved"
+  },
+  "o_err_line": {
+    "message": "Line $1: $2"
+  },
+  "o_hit": {
+    "message": "Line $1 → $2"
+  },
+  "o_nohit": {
+    "message": "No rule matches"
+  },
+  "o_readback": {
+    "message": "stored text does not match what was saved"
+  },
+  "o_save_failed": {
+    "message": "Save failed: $1"
+  },
+  "o_saved": {
+    "message": "Saved at $1. $2 rules active"
+  },
+  "o_saved_ok": {
+    "message": "; open tabs update now"
+  },
+  "o_saved_bad": {
+    "message": "; line $1 has an error and is skipped"
+  },
+  "h_match": {
+    "message": "<b>URL match</b>"
+  },
+  "h_glob": {
+    "message": "glob, matches the whole URL; <code>*</code> matches as little as possible; <code>\\</code> escapes"
+  },
+  "h_alt": {
+    "message": "alternatives; <code>( )</code> captures, used as <code>{1}</code> in the tab name, like zmv"
+  },
+  "h_auto_k": {
+    "message": "Without <code>( )</code>"
+  },
+  "h_auto": {
+    "message": "every <code>*</code> / <code>?</code> / <code>[…]</code> captures (zmv -W)"
+  },
+  "h_case": {
+    "message": "prefix: ignore case (zsh glob flag)"
+  },
+  "h_regex": {
+    "message": "JS regex, partial match; named group <code>(?&lt;k&gt;…)</code> is <code>{&lt;k&gt;}</code>"
+  },
+  "h_titlef": {
+    "message": "prefix: match the original title instead of the URL"
+  },
+  "h_name": {
+    "message": "<b>Tab name</b>: plain text is shown as is, <code>{…}</code> is a piece filled in per page, <code>{{</code> <code>}}</code> are literal braces"
+  },
+  "h_page": {
+    "message": "text of the first element matching this CSS selector (the side panel picker writes it for you)"
+  },
+  "h_param": {
+    "message": "URL parameter (also looks in <code>#/route?env=</code>)"
+  },
+  "h_host": {
+    "message": "domain / part 1 / second to last part"
+  },
+  "h_path": {
+    "message": "path / part 2"
+  },
+  "h_titlev": {
+    "message": "original title, full URL"
+  },
+  "h_cap": {
+    "message": "capture group / named regex group"
+  },
+  "h_or": {
+    "message": "if empty, use the next one; switches back once the page element renders"
+  },
+  "h_cut": {
+    "message": "only the part before / after a separator"
+  },
+  "h_matchf": {
+    "message": "keep the part in parentheses; no match counts as empty"
+  },
+  "h_more": {
+    "message": "replace, change case, trim, truncate"
+  },
+  "h_old_k": {
+    "message": "Older syntax"
+  },
+  "h_old": {
+    "message": "<code>$1</code> <code>$title</code> <code>${q.env|before:.}</code> <code>${sel:h1 || 1}</code> still work"
+  },
+  "h_icon": {
+    "message": "emoji, <code>letter</code> (first letter of the new title), 1–2 characters, an image URL, <code>none</code>"
+  },
+  "h_color": {
+    "message": "a CSS color or <code>auto</code> (a stable color from capture 1); with color alone, a dot is added to the original icon"
+  },
+  "tutorialUrl": {
+    "message": "https://github.com/commiyou/tabmv/blob/main/docs/tutorial.md"
+  }
+}

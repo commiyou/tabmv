@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [en-US, zh-CN]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+
+      # Branded Chrome ignores --load-extension, so the browser test uses Chrome for Testing.
+      - name: Install Chrome for Testing
+        run: |
+          out=$(npx --yes @puppeteer/browsers install chrome@stable --path "$RUNNER_TEMP/cft")
+          echo "$out"
+          echo "CHROME=$(echo "$out" | tail -1 | awk '{print $2}')" >> "$GITHUB_ENV"
+      - name: Browser test (${{ matrix.lang }})
+        run: npm run e2e
+        env:
+          E2E_LANG: ${{ matrix.lang }}
+          SHOTS: ${{ runner.temp }}/shots
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.lang == 'en-US'
+        with:
+          name: extension-zip
+          path: dist/*.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-${{ matrix.lang }}
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore

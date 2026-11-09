@@ -1,0 +1,452 @@
+{
+  "extName": {
+    "message": "tabmv – 按网址和页面内容重命名标签"
+  },
+  "extDesc": {
+    "message": "用页面上的文字、网址里的片段和原标题组合出标签名，还能换图标颜色。支持 zmv 风格的 glob 和正则。"
+  },
+  "actionTitle": {
+    "message": "tabmv：给这个标签改名"
+  },
+  "cmdOpen": {
+    "message": "打开改名面板"
+  },
+  "color_none": {
+    "message": "无"
+  },
+  "color_auto": {
+    "message": "自动配色"
+  },
+  "icon_original": {
+    "message": "原图标"
+  },
+  "icon_letter": {
+    "message": "首字"
+  },
+  "sep_space": {
+    "message": "空格"
+  },
+  "sep_quote": {
+    "message": "「$1」"
+  },
+  "url_host_n": {
+    "message": "域名第 $1 段"
+  },
+  "url_host": {
+    "message": "整个域名"
+  },
+  "url_path_n": {
+    "message": "路径第 $1 段"
+  },
+  "url_path": {
+    "message": "整个路径"
+  },
+  "url_param": {
+    "message": "参数 $1"
+  },
+  "src_page": {
+    "message": "页面上的文字"
+  },
+  "src_title": {
+    "message": "原标题"
+  },
+  "src_url": {
+    "message": "网址里的$1"
+  },
+  "src_url_value": {
+    "message": "网址里的$1（$2）"
+  },
+  "src_capture": {
+    "message": "匹配到的第 $1 部分"
+  },
+  "cut_full": {
+    "message": "用完整的内容"
+  },
+  "cut_before": {
+    "message": "只要$1前面的部分"
+  },
+  "cut_after": {
+    "message": "只要$1后面的部分"
+  },
+  "cut_regex": {
+    "message": "按正则提取…"
+  },
+  "cut_regex_ph": {
+    "message": "括号里的部分会被保留，例如 #(\\d+)"
+  },
+  "fb_none": {
+    "message": "留空"
+  },
+  "fb_url": {
+    "message": "用网址里的$1（$2）"
+  },
+  "fb_title": {
+    "message": "用原标题"
+  },
+  "fb_text": {
+    "message": "显示一段文字…"
+  },
+  "card_missing": {
+    "message": "（现在取不到）"
+  },
+  "card_where": {
+    "message": "位置"
+  },
+  "card_repick": {
+    "message": "👆 重新点选"
+  },
+  "card_which": {
+    "message": "用哪段"
+  },
+  "card_cut": {
+    "message": "只要一部分"
+  },
+  "card_fb_ph": {
+    "message": "比如：加载中"
+  },
+  "card_fallback": {
+    "message": "取不到时"
+  },
+  "card_fb_hint": {
+    "message": "页面还没加载完、或者页面改版找不到这段文字时，会用这里的设置。"
+  },
+  "card_delete": {
+    "message": "删除这一段"
+  },
+  "card_done": {
+    "message": "完成"
+  },
+  "url_none": {
+    "message": "这个页面没有网址可用。"
+  },
+  "url_tip": {
+    "message": "点一下要用的那段："
+  },
+  "url_empty": {
+    "message": "(空)"
+  },
+  "scope_tab": {
+    "message": "只这个标签（关掉就失效）"
+  },
+  "scope_site": {
+    "message": "$1 的所有页面"
+  },
+  "scope_path": {
+    "message": "$1 开头的页面"
+  },
+  "scope_param": {
+    "message": "任何网站上，网址带 $1= 的页面"
+  },
+  "scope_custom": {
+    "message": "自定义匹配…"
+  },
+  "icon_sum_letter": {
+    "message": "标题首字"
+  },
+  "icon_sum_dot": {
+    "message": "色点"
+  },
+  "icon_sum_none": {
+    "message": "不改"
+  },
+  "empty_title": {
+    "message": "（空）"
+  },
+  "check_err": {
+    "message": "有问题：$1"
+  },
+  "check_out": {
+    "message": "⚠ 当前这个页面不在范围内，保存后它不会变"
+  },
+  "check_in": {
+    "message": "✓ 当前页面在范围内"
+  },
+  "chip_missing": {
+    "message": "$1：现在取不到，会留空"
+  },
+  "chip_fallback": {
+    "message": "$1现在取不到，正在用$2"
+  },
+  "note_fallback": {
+    "message": "$1取不到时，用$2"
+  },
+  "note_now": {
+    "message": "（现在就是这样）"
+  },
+  "sum_manual": {
+    "message": "按你手写的规则保存："
+  },
+  "sum_where_site": {
+    "message": "$1 的所有页面"
+  },
+  "sum_where_path": {
+    "message": "$1 开头的页面"
+  },
+  "sum_where_param": {
+    "message": "网址带 $1= 的页面"
+  },
+  "sum_where_custom": {
+    "message": "网址符合 $1 的页面"
+  },
+  "sum_tab_shows": {
+    "message": "这个标签会显示成 "
+  },
+  "sum_rule_shows": {
+    "message": "以后打开 $1，标签会显示成 "
+  },
+  "sum_quote": {
+    "message": "「$1」"
+  },
+  "sum_empty": {
+    "message": "（名字留空就保持原标题）"
+  },
+  "sum_updates": {
+    "message": "· 保存会更新现在生效的这条规则"
+  },
+  "sum_out": {
+    "message": "· 但当前这个页面不在范围内"
+  },
+  "now_manual": {
+    "message": "原标题「$1」· 这个标签单独改过"
+  },
+  "now_clear": {
+    "message": "清除"
+  },
+  "now_rule": {
+    "message": "原标题「$1」· 由一条规则控制，下面就是它"
+  },
+  "now_pause": {
+    "message": "暂停这条规则"
+  },
+  "now_none": {
+    "message": "原标题「$1」"
+  },
+  "btn_tab": {
+    "message": "只改这个标签"
+  },
+  "btn_update": {
+    "message": "更新规则"
+  },
+  "btn_save": {
+    "message": "保存规则"
+  },
+  "btn_save_new": {
+    "message": "另存为新规则"
+  },
+  "msg_tab_saved": {
+    "message": "改好了，只对这个标签有效"
+  },
+  "msg_updated": {
+    "message": "规则已更新"
+  },
+  "msg_saved": {
+    "message": "已保存，范围内的标签都会变"
+  },
+  "msg_reset": {
+    "message": "已恢复"
+  },
+  "msg_rule_changed": {
+    "message": "规则刚被改过，请到规则页操作"
+  },
+  "msg_paused": {
+    "message": "已暂停。到规则页删掉这行开头的 # 就能恢复"
+  },
+  "pick": {
+    "message": "👆 页面上的文字"
+  },
+  "pick_cancel": {
+    "message": "✋ 取消（去页面上点一下文字）"
+  },
+  "msg_many": {
+    "message": "页面上有 $1 处相同位置，会用第一处"
+  },
+  "adv_edited": {
+    "message": "已手动修改，保存时直接用这段文字。"
+  },
+  "adv_undo": {
+    "message": "撤销修改"
+  },
+  "p_preview": {
+    "message": "标签会显示成这样"
+  },
+  "p_blocked": {
+    "message": "这个页面（浏览器设置页、扩展商店等）不允许扩展修改，换一个普通网页试试。"
+  },
+  "p_name": {
+    "message": "标签名"
+  },
+  "p_name_ph": {
+    "message": "直接输入名字，或插入下面的内容"
+  },
+  "p_from_url": {
+    "message": "🔗 网址里的一段"
+  },
+  "p_add_title": {
+    "message": "📄 原标题"
+  },
+  "p_apply": {
+    "message": "应用于"
+  },
+  "p_icon": {
+    "message": "图标"
+  },
+  "p_dot": {
+    "message": "色点"
+  },
+  "p_replace": {
+    "message": "换成"
+  },
+  "p_icon_ph": {
+    "message": "其他 emoji、1–2 个字，或图片网址"
+  },
+  "p_reset": {
+    "message": "恢复原样"
+  },
+  "p_adv": {
+    "message": "高级：规则文本"
+  },
+  "p_manage": {
+    "message": "管理全部规则 →"
+  },
+  "picker_bar": {
+    "message": "点一下想当作标签名的文字 · <kbd>↑</kbd> 选更大范围 · <kbd>↓</kbd> 缩小 · <kbd>Esc</kbd> 取消"
+  },
+  "picker_notext": {
+    "message": "（这里没有文字）"
+  },
+  "colon": {
+    "message": "："
+  },
+  "o_title": {
+    "message": "tabmv 规则"
+  },
+  "o_intro": {
+    "message": "平时用侧边栏就够了，这里给需要批量编辑的人。每行一条：<code>网址匹配 =&gt; 标签名 [; icon=…] [; color=…]</code>，从上到下第一条匹配的生效，<code>#</code> 开头为注释。⌘/Ctrl+S 保存。"
+  },
+  "o_save": {
+    "message": "保存"
+  },
+  "o_test": {
+    "message": "测试"
+  },
+  "o_test_title": {
+    "message": "原标题"
+  },
+  "o_tabs": {
+    "message": "已打开标签预览"
+  },
+  "o_col_line": {
+    "message": "行"
+  },
+  "o_col_orig": {
+    "message": "原标题"
+  },
+  "o_col_new": {
+    "message": "新标题"
+  },
+  "o_syntax": {
+    "message": "语法"
+  },
+  "o_tutorial": {
+    "message": "新手教程 →"
+  },
+  "o_unsaved": {
+    "message": "未保存"
+  },
+  "o_err_line": {
+    "message": "第 $1 行：$2"
+  },
+  "o_hit": {
+    "message": "第 $1 行 → $2"
+  },
+  "o_nohit": {
+    "message": "没有匹配的规则"
+  },
+  "o_readback": {
+    "message": "读回的内容和保存的不一致"
+  },
+  "o_save_failed": {
+    "message": "保存失败：$1"
+  },
+  "o_saved": {
+    "message": "已保存 $1，$2 条规则生效"
+  },
+  "o_saved_ok": {
+    "message": "，已打开的标签会立即更新"
+  },
+  "o_saved_bad": {
+    "message": "；第 $1 行有错误，没有生效"
+  },
+  "h_match": {
+    "message": "<b>网址匹配</b>"
+  },
+  "h_glob": {
+    "message": "glob，整串匹配；<code>*</code> 尽量短地匹配；<code>\\</code> 转义"
+  },
+  "h_alt": {
+    "message": "选择；<code>( )</code> 是捕获组，和 zmv 一样在标签名里用 <code>{1}</code> 引用"
+  },
+  "h_auto_k": {
+    "message": "没有 <code>( )</code> 时"
+  },
+  "h_auto": {
+    "message": "每个 <code>*</code> / <code>?</code> / <code>[…]</code> 都自动捕获（zmv -W）"
+  },
+  "h_case": {
+    "message": "前缀，忽略大小写（zsh glob flag）"
+  },
+  "h_regex": {
+    "message": "JS 正则，部分匹配；命名组 <code>(?&lt;k&gt;…)</code> 用 <code>{&lt;k&gt;}</code> 引用"
+  },
+  "h_titlef": {
+    "message": "前缀，匹配原标题而不是网址"
+  },
+  "h_name": {
+    "message": "<b>标签名</b>：普通文字照原样显示，<code>{…}</code> 是一段可变内容，<code>{{</code> <code>}}</code> 表示花括号本身"
+  },
+  "h_page": {
+    "message": "页面上第一个匹配这个 CSS 选择器的元素的文字（侧边栏点选会自动生成）"
+  },
+  "h_param": {
+    "message": "网址参数（也查 <code>#/route?env=</code>）"
+  },
+  "h_host": {
+    "message": "域名 / 第 1 段 / 倒数第 2 段"
+  },
+  "h_path": {
+    "message": "路径 / 第 2 段"
+  },
+  "h_titlev": {
+    "message": "原标题、完整网址"
+  },
+  "h_cap": {
+    "message": "网址匹配里的捕获组 / 正则命名组"
+  },
+  "h_or": {
+    "message": "取不到就依次用后面的；页面元素渲染出来后自动换回前面的"
+  },
+  "h_cut": {
+    "message": "只要分隔符前面 / 后面的部分"
+  },
+  "h_matchf": {
+    "message": "按正则取括号里的部分，没匹配到算取不到"
+  },
+  "h_more": {
+    "message": "替换、大小写、去空白、截断"
+  },
+  "h_old_k": {
+    "message": "旧写法"
+  },
+  "h_old": {
+    "message": "<code>$1</code> <code>$title</code> <code>${q.env|before:.}</code> <code>${sel:h1 || 1}</code> 仍然可用"
+  },
+  "h_icon": {
+    "message": "emoji、<code>letter</code>（新标题首字）、1–2 个字、图片网址、<code>none</code>"
+  },
+  "h_color": {
+    "message": "CSS 颜色或 <code>auto</code>（按第 1 个捕获组算出固定颜色）；只给 color 时在原图标角上加色点"
+  },
+  "tutorialUrl": {
+    "message": "https://github.com/commiyou/tabmv/blob/main/docs/tutorial.zh-CN.md"
+  }
+}

@@ -1,6 +1,9 @@
 (async () => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  localize();
+  document.title = t('o_title');
+  $('tutorial').href = t('tutorialUrl');
   const ta = $('rules');
   ta.value = await TabStore.loadRulesText();
   let saved = ta.value;
@@ -37,8 +40,8 @@
 
   function update() {
     const { rules, errors } = TabRules.parseRules(ta.value);
-    $('errors').textContent = errors.map((e) => '第 ' + e.lineNo + ' 行: ' + e.message + '\n    ' + e.line).join('\n');
-    $('msg').textContent = ta.value === saved ? '' : '未保存';
+    $('errors').textContent = errors.map((e) => t('o_err_line', e.lineNo, e.message) + '\n    ' + e.line).join('\n');
+    $('msg').textContent = ta.value === saved ? '' : t('o_unsaved');
 
     const page = { url: $('tUrl').value, title: $('tTitle').value };
     let d;
@@ -47,7 +50,7 @@
     } catch (e) {
       d = { line: '?', title: e.message, deco: '' };
     }
-    $('tOut').textContent = d ? '第 ' + d.line + ' 行 → ' + d.title + (d.deco ? '   ' + d.deco : '') : '没有命中';
+    $('tOut').textContent = d ? t('o_hit', d.line, d.title) + (d.deco ? '   ' + d.deco : '') : t('o_nohit');
 
     const tb = $('tabs');
     tb.textContent = '';
@@ -72,10 +75,10 @@
     const text = ta.value;
     try {
       await TabStore.saveRulesText(text);
-      if ((await TabStore.loadRulesText()) !== text) throw new Error('读回的内容和保存的不一致');
+      if ((await TabStore.loadRulesText()) !== text) throw new Error(t('o_readback'));
     } catch (e) {
       $('msg').className = 'err';
-      $('msg').textContent = '保存失败：' + e.message;
+      $('msg').textContent = t('o_save_failed', e.message);
       return;
     }
     saved = text;
@@ -83,8 +86,8 @@
     const { rules, errors } = TabRules.parseRules(text);
     $('msg').className = errors.length ? 'err' : 'ok';
     $('msg').textContent =
-      '已保存 ' + new Date().toLocaleTimeString() + '，' + rules.length + ' 条规则生效' +
-      (errors.length ? '；第 ' + errors.map((e) => e.lineNo).join('、') + ' 行有错误，没有生效' : '，已打开的标签会立即更新');
+      t('o_saved', new Date().toLocaleTimeString(), rules.length) +
+      (errors.length ? t('o_saved_bad', errors.map((e) => e.lineNo).join(', ')) : t('o_saved_ok'));
   }
 
   ta.addEventListener('input', update);

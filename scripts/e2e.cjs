@@ -26,6 +26,12 @@ const FIGHT = `<!doctype html><html><head><title>Theirs</title></head><body><h1 
     .observe(document.querySelector('title'), { childList: true, characterData: true, subtree: true });
 </script></body></html>`;
 
+// UI text depends on the browser language; read the same messages.json the
+// extension uses so the assertions work in any locale.
+let MSG = {};
+const M = (key, ...subs) => (MSG[key] ? MSG[key].message : key).replace(/\$(\d)/g, (_, n) => String(subs[n - 1]));
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function waitFor(fn, what, ms = 4000) {
@@ -50,11 +56,22 @@ async function waitFor(fn, what, ms = 4000) {
   const browser = await puppeteer.launch({
     executablePath: process.env.CHROME,
     headless: process.env.HEADFUL ? false : 'new',
-    args: ['--disable-features=DisableLoadExtensionCommandLineSwitch', '--disable-extensions-except=' + EXT, '--load-extension=' + EXT, '--no-first-run'],
+    args: [
+      '--disable-features=DisableLoadExtensionCommandLineSwitch',
+      '--disable-extensions-except=' + EXT,
+      '--load-extension=' + EXT,
+      '--no-first-run',
+      ...(process.env.CI ? ['--no-sandbox'] : []),
+      // E2E_LANG=zh-CN runs the UI in Chinese (--lang on Linux/Windows, AppleLanguages on macOS)
+      ...(process.env.E2E_LANG ? ['--lang=' + process.env.E2E_LANG, ...(process.platform === 'darwin' ? ['-AppleLanguages', '(' + process.env.E2E_LANG + ')'] : [])] : []),
+    ],
   });
   try {
     const swTarget = await browser.waitForTarget((t) => t.type() === 'service_worker' && t.url().endsWith('background.js'));
     const sw = await swTarget.worker();
+    const lang = await sw.evaluate(() => chrome.i18n.getUILanguage());
+    MSG = JSON.parse(require('node:fs').readFileSync(path.join(EXT, '_locales', /^zh/i.test(lang) ? 'zh_CN' : 'en', 'messages.json'), 'utf8'));
+    console.log('UI language:', lang);
     const setRules = (text) => sw.evaluate((t) => TabStore.saveRulesText(t), text);
 
     await setRules('*[?&]env=(*).baidu.com* => ${sel:"h1.env-name" || 1} ; color=auto\n*://*/* => [${q.env|default:prod}] $title');
@@ -101,7 +118,7 @@ async function waitFor(fn, what, ms = 4000) {
     await opt.evaluate(() => { const t = document.getElementById('rules'); t.value = '*://127.0.0.1*/* => From options {?env}'; t.dispatchEvent(new Event('input')); });
     await opt.click('#save');
     await waitFor(async () => (await page.title()) === 'From options qa', 'options page save applies to open tabs');
-    assert.match(await opt.$eval('#msg', (e) => e.textContent), /1 条规则生效/);
+    assert.match(await opt.$eval('#msg', (e) => e.textContent), new RegExp(esc(M('o_saved', 'X', 1)).replace('X', '.*')));
     await opt.close();
     console.log('ok  rules page: Save writes the rules and open tabs update');
 
@@ -167,7 +184,8 @@ async function waitFor(fn, what, ms = 4000) {
 
     // 1. pick text on the page -> chip, card opens; 2. fall back to ?env
     await pickOwner();
-    assert.ok(await chooseOption('用网址里的参数 env'), 'fallback option exists');
+    const fbEnv = M('fb_url', M('url_param', 'env'), 'qa').replace(/[（(]qa[)）]$/, '');
+    assert.ok(await chooseOption(fbEnv), 'fallback option exists');
     await sleep(300);
     // 3. type literal text after the chip; 4. insert a piece of the URL
     await panel.click('#tokenCard .btns .primary');
@@ -178,8 +196,9 @@ async function waitFor(fn, what, ms = 4000) {
     await panel.evaluate(() => [...document.querySelectorAll('#urlPieces .p')].find((p) => p.textContent === 'app').click());
     await panel.waitForFunction(() => document.getElementById('pvTitle').textContent === 'Alice @ app');
     const summary = await panel.$eval('#summary', (e) => e.textContent);
-    assert.match(summary, /以后打开 127\.0\.0\.1:\d+ 的所有页面，标签会显示成 「Alice @ app」/);
-    assert.match(summary, /页面上的文字取不到时，用网址里的参数 env/);
+    const host = new URL(base).host;
+    assert.ok(summary.includes(M('sum_rule_shows', M('sum_where_site', host)) + M('sum_quote', 'Alice @ app')), summary);
+    assert.ok(summary.includes(M('note_fallback', M('src_page'), M('src_url', M('url_param', 'env')))), summary);
     await panel.click('#save');
     await waitFor(async () => (await page.title()) === 'Alice @ app', 'rule saved from the panel');
     const first = (await sw.evaluate(() => TabStore.loadRulesText())).split('\n')[0];
@@ -192,33 +211,63 @@ async function waitFor(fn, what, ms = 4000) {
     console.log('ok  page text gone -> that piece falls back to the URL, chip turns amber');
 
     await panel.reload();
-    await panel.waitForFunction(() => document.querySelectorAll('#composer .tk').length === 2 && document.getElementById('save').textContent === '更新规则');
+    await panel.waitForFunction((label) => document.querySelectorAll('#composer .tk').length === 2 && document.getElementById('save').textContent === label, {}, M('btn_update'));
     console.log('ok  reopening the panel loads the controlling rule back for editing');
 
     if (process.env.SHOTS) {
-      await setRules((await sw.evaluate(() => TabStore.DEFAULT_RULES)) + '\n/browse\\/(?<key>[A-Z]+-\\d+)/ => {<key>} {title replace / - Jira$/ ""} ; icon=🐞');
+      // Screenshots for the docs and the store listing, one set per UI language.
+      const fs = require('node:fs');
+      fs.mkdirSync(process.env.SHOTS, { recursive: true });
+      const suffix = /^zh/i.test(lang) ? '.zh-CN' : '';
+      const shot = (p, name, opts = {}) => p.screenshot({ path: path.join(process.env.SHOTS, name + suffix + '.png'), ...opts });
+      const toEnd = () => panel.evaluate(() => { const c = document.getElementById('composer'); const r = document.createRange(); r.selectNodeContents(c); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r); });
+
+      await setRules((await sw.evaluate(() => TabStore.DEFAULT_RULES)) + '\n*[?&]env=(*).baidu.com* => {1} ; color=auto\n/browse\\/(?<key>[A-Z]+-\\d+)/ => {<key>} {title replace / - Jira$/ ""} ; icon=🐞');
       const opt = await browser.newPage();
-      await opt.setViewport({ width: 1000, height: 1300 });
+      await opt.setViewport({ width: 1100, height: 1400 });
       await page.goto(base + '/app?id=3&env=sandbox01.baidu.com&x=1');
       await opt.goto('chrome-extension://' + extId + '/src/options.html');
-      await sleep(500);
-      await opt.screenshot({ path: path.join(process.env.SHOTS, 'options.png') });
+      await sleep(600);
+      await shot(opt, 'options');
+      await opt.close();
+
       await setRules('# empty');
       await sleep(1500); // let the late <h1> render
       await panel.reload();
       await panel.waitForSelector('#pick:not([disabled])');
-      await pickOwner();
-      await chooseOption('用网址里的参数 env');
+      await shot(panel, 'step1-empty', { fullPage: true });
+      await panel.focus('#composer');
+      await panel.keyboard.type('Demo ');
+      await sleep(400);
+      await shot(panel, 'step1-typed', { fullPage: true });
+
+      await panel.click('#fromUrl');
       await sleep(300);
-      await panel.evaluate(() => { const c = document.getElementById('composer'); const r = document.createRange(); r.selectNodeContents(c); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r); });
+      await shot(panel, 'step2-url', { fullPage: true });
+      await panel.evaluate(() => [...document.querySelectorAll('#urlPieces .p')].find((p) => p.textContent.startsWith('sandbox01')).click());
+      await sleep(400);
+      await panel.evaluate((label) => { const s = [...document.querySelectorAll('#tokenCard select')].find((s) => [...s.options].some((o) => o.textContent === label)); const o = [...s.options].find((o) => o.textContent === label); s.value = o.value; s.dispatchEvent(new Event('change')); }, M('cut_before', M('sep_quote', '.')));
+      await sleep(500);
+      await shot(panel, 'step2-cut', { fullPage: true });
+      await panel.click('#tokenCard .btns .primary');
+
+      await toEnd();
       await panel.keyboard.type(' · ');
-      await panel.evaluate(() => document.getElementById('addTitle').click());
-      await sleep(200);
-      await panel.evaluate(() => document.querySelector('#composer .tk').click());
-      await panel.evaluate(() => [...document.querySelectorAll('#colors button')].find((b) => b.title === '自动配色')?.click());
+      await pickOwner();
+      await chooseOption(fbEnv);
+      await sleep(500);
+      await shot(panel, 'step3-page', { fullPage: true });
+      await panel.click('#tokenCard .btns .primary');
+
+      await panel.evaluate((M_auto) => [...document.querySelectorAll('#colors button')].find((b) => b.title === M_auto)?.click(), M('color_auto'));
       await panel.evaluate(() => (document.getElementById('iconBox').open = true));
       await sleep(800);
-      await panel.screenshot({ path: path.join(process.env.SHOTS, 'panel.png'), fullPage: true });
+      await shot(panel, 'panel', { fullPage: true });
+      await panel.click('#save');
+      await sleep(800);
+      await panel.evaluate(() => (document.getElementById('adv').open = true));
+      await sleep(300);
+      await shot(panel, 'step5-saved', { fullPage: true });
     }
     console.log('e2e passed');
   } finally {

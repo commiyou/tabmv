@@ -110,7 +110,8 @@
       kbd { background: #fff2; border-radius: 3px; padding: 0 4px; }
     </style>
     <div class="box"></div><div class="tip"></div>
-    <div class="bar">点一下想当作标签名的文字 · <kbd>↑</kbd> 选更大范围 · <kbd>↓</kbd> 缩小 · <kbd>Esc</kbd> 取消</div>`;
+    <div class="bar"></div>`;
+    shadow.querySelector('.bar').innerHTML = chrome.i18n.getMessage('picker_bar'); // our own trusted markup
     const box = shadow.querySelector('.box');
     const tip = shadow.querySelector('.tip');
     document.documentElement.appendChild(host);
@@ -122,7 +123,7 @@
       if (!el) return;
       const r = el.getBoundingClientRect();
       Object.assign(box.style, { left: r.left - 2 + 'px', top: r.top - 2 + 'px', width: r.width + 'px', height: r.height + 'px' });
-      tip.textContent = textOf(el) || '（这里没有文字）';
+      tip.textContent = textOf(el) || chrome.i18n.getMessage('picker_notext');
       tip.style.left = Math.max(4, r.left) + 'px';
       tip.style.top = (r.top > 30 ? r.top - 28 : r.bottom + 6) + 'px';
     };

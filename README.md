@@ -1,111 +1,79 @@
 # tabmv
 
-Chrome 扩展（MV3）：给标签页改名、换图标。标签名可以把自己写的文字、页面上的文字、网址里的某一段和原标题自由组合，每一段取不到时还能改用别的内容。匹配网址沿用 zsh / zmv 的 glob 和 JS 正则。
+**English** · [简体中文](README.zh-CN.md)
+
+A Chrome extension that renames tabs and recolors their icons. A tab name can mix your own text, text from the page, any part of the URL and the original title, and every piece can fall back to something else while the page is still loading. URL matching uses zsh / `zmv` style globs or regular expressions.
 
 ```text
-# 网址 http://host/app?id=3&env=sandbox01.baidu.com   →  标签 "sandbox01"，每个环境一个固定颜色
+# URL  http://host/app?id=3&env=sandbox01.baidu.com   →  tab "sandbox01", one stable color per env
 *[?&]env=(*).baidu.com* => {1} ; color=auto
 ```
 
-## 安装
+<img src="docs/images/panel.png" width="380" alt="The side panel">
 
-`chrome://extensions` → 打开“开发者模式” → “加载已解压的扩展程序” → 选本目录。无构建步骤、无运行时依赖。
+## Why
 
-## 用法
+When ten tabs all say "Dashboard" or "Order detail", you cannot tell the QA environment from production, or one ticket from another. tabmv puts the part you care about into the tab title: the environment from the URL, the ticket number from the page, a fixed label for one tab.
 
-点工具栏图标或按 `Alt+Shift+R` 打开侧边栏。
+## Install
 
-**标签名**是一个输入框：直接打字，或者在光标处插入一段可变内容，它会变成一个显示当前值的小块。三种来源可以任意组合、重复使用：
+- **Chrome Web Store**: coming soon.
+- **From source**: download the zip from [Releases](https://github.com/commiyou/tabmv/releases) and unzip it, or clone this repo. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder. Needs Chrome 116 or later.
 
-- 👆 **页面上的文字**：点按钮后去页面上点一下（↑/↓ 扩大或缩小范围，Esc 取消；先选中文字再点按钮也行）。
-- 🔗 **网址里的一段**：网址会拆开显示，点哪段就用哪段，比如域名第 1 段、路径第 2 段、参数 env 的值。
-- 📄 **原标题**。
+## Use it in one minute
 
-点一下小块可以设置：只要其中一部分（「.」前面、「-」后面，或按正则提取），以及**取不到时**用什么（网址里的某段、原标题、一段文字，或留空）。比如“页面上的环境名，页面还没加载出来时先用网址里的 env”。正在用后备内容的小块会变成橙色。
+1. Open any page and click the tabmv icon (or press `Alt+Shift+R`). A side panel opens.
+2. Type a name in **Tab name**. Or insert pieces: **👆 Text on the page** (then click the text), **🔗 Part of the URL** (then click a part), **📄 Original title**.
+3. Click a piece to keep only part of it (before or after a `.`, or a regex), and to choose what to show **if missing**.
+4. Pick where it applies: this tab only, this site, this path, or any URL with a given parameter.
+5. Click **Save rule**. The preview at the top shows the tab before you save.
 
-**应用于**是一个下拉框：只这个标签、这个网站、这个路径、任何网站上带某个参数的网址，或自定义匹配。顶部一直显示标签保存后的样子，下方用一句话说明效果，例如：以后打开 x.baidu.com 的所有页面，标签会显示成「QA-3 @ orders」；页面上的文字取不到时，用网址里的参数 env。
+The [tutorial](docs/tutorial.md) walks through five real examples with screenshots.
 
-当前标签已经由某条规则控制时，打开侧边栏会直接载入这条规则，保存就是更新它，也可以“另存为新规则”。
+## Rule text
 
-## 规则文本
-
-侧边栏保存的是一行普通文本，可以在规则页批量编辑、复制分享。从上到下第一条匹配的生效，`#` 开头是注释：
-
-```text
-网址匹配 => 标签名 [; icon=…] [; color=…]
-```
-
-**网址匹配**
-
-| 写法 | 含义 | 来源 |
-| --- | --- | --- |
-| `*` `?` `[a-z]` `[!&]` `\x` | glob，整串匹配；`*` 取最短匹配 | zsh |
-| `{a,b}` `(a\|b)` | 选择 | zsh |
-| `(*)` | 捕获组，在标签名里用 `{1}` 引用 | zmv |
-| 没有 `( )` 时每个 `*` `?` `[…]` 自动捕获 | `https://*.x.com/*/issues/* => {2}#{3}` | zmv `-W` |
-| `(#i)` 前缀 | 忽略大小写 | zsh glob flag |
-| `/re/i`，命名组 `(?<k>…)` 用 `{<k>}` 引用 | JS 正则，部分匹配 | JS |
-| `*://*.baidu.com/*` | Chrome match pattern 本身就是合法 glob | Chrome |
-| `title:` 前缀 | 匹配原标题而不是网址 | |
-
-**标签名**：普通文字照原样显示，`{…}` 是一段可变内容，`{{` `}}` 表示花括号本身。
-
-| 写法 | 含义 |
-| --- | --- |
-| `{page ".env-name"}` | 页面上第一个匹配这个 CSS 选择器的元素的文字 |
-| `{?env}` | 网址参数（也查 `#/route?env=`） |
-| `{host}` `{host[1]}` `{host[-2]}` | 域名 / 第 1 段 / 倒数第 2 段 |
-| `{path}` `{path[2]}` | 路径 / 第 2 段 |
-| `{title}` `{url}` | 原标题、完整网址 |
-| `{1}` `{<name>}` | 网址匹配里的捕获组 |
-| `A or B or "文字"` | 取不到就依次用后面的；页面元素渲染出来后自动换回前面的 |
-| `before "."` `after "-"` | 只要分隔符前面 / 后面的部分 |
-| `match /#(\d+)/` | 按正则取括号里的部分，没匹配到算取不到 |
-| `replace /re/ "x"` `upper` `lower` `trim` `max 20` | 替换、大小写、去空白、截断 |
-| `icon=` | emoji、`letter`（新标题首字）、1–2 个字、图片网址、`none` |
-| `color=` | CSS 颜色或 `auto`（按第 1 个捕获组算出固定颜色，同一个 env 永远同色） |
+Everything the panel saves is one line of text. You can edit, copy and share rules on the rules page (right-click the icon → Options):
 
 ```text
-*[?&]env=(*).baidu.com*  => {1}                                        # glob 捕获，最像 zmv
-*://*.baidu.com/*        => {?env before "."}                          # 按参数名取，不管参数顺序
-*://*.baidu.com/*        => [{page ".env-name" or ?env before "."}] {title} ; color=auto
-*://jira.x/browse/*      => {page "h1" match /([A-Z]+-\d+)/ or path[2]} {title replace / - Jira$/ ""}
+URL match => tab name [; icon=…] [; color=…]
 ```
 
-上一版的 `$1`、`$title`、`${q.env|before:.}`、`${sel:h1 || 1}` 写法仍然能用，侧边栏再次保存时会改写成新写法。
+```text
+*://*.baidu.com/*        => {?env before "."}                                # a URL parameter
+*://*.baidu.com/*        => [{page ".env-name" or ?env before "."}] {title}   # page text, URL while loading
+*://jira.x/browse/*      => {page "h1" match /([A-Z]+-\d+)/ or path[2]} ; icon=🐞
+```
 
-只写 `color=` 时会在原 favicon 右下角加一个色点，站点图标仍然认得出来；`{title}` 始终指页面自己的标题，所以加前缀不会叠成 `[qa] [qa] …`。
-
-## 设计
-
-规则存成一份纯文本，而不是表单记录：方便复制、diff、分享和批量改，选项页就是导入导出。存在 `chrome.storage.sync`（分块，单项 8KB 限制），同一账号的 Chrome 之间同步。
-
-| 文件 | 作用 |
+| In the tab name | Means |
 | --- | --- |
-| `src/rules.js` | 纯函数规则引擎：glob→RegExp、模板、过滤器、求值。content script、页面、service worker 和 Node 测试共用 |
-| `src/content.js` | 页面里求值并应用；`MutationObserver` 盯 `<head>`，页面自己改标题或 favicon 时重新套用；规则用到 `sel:` 时再节流（250ms）盯 `<body>`，元素出现或文字变化后重算 |
-| `src/picker.js` | 页面上的元素点选器（Shadow DOM 遮罩），生成尽量稳定的选择器：优先 id、`data-testid`、`aria-label`，跳过 `css-1x2y3z` 这类生成的 class，必要时才用 `:nth-of-type` |
-| `src/background.js` | 手动重命名存 `storage.session`（刷新后还在，关标签清除）；SPA `pushState` 时通知页面重算；代取跨域 favicon 给 canvas 叠色点；安装时注入已打开的标签 |
-| `src/panel.*` | 侧边栏：标签名输入框（文字 + 可变内容小块）与规则文本双向转换，在真实页面上实时预览。用侧边栏而不是弹窗，是因为弹窗在页面上点一下就会关掉，没法点选 |
-| `src/options.*` | 规则编辑器，带逐行报错、测试框和已打开标签预览 |
+| `{page ".css"}` | text of the first matching element on the page |
+| `{?env}` `{host[1]}` `{path[2]}` | URL parameter, domain part, path part |
+| `{title}` `{1}` | original title, first `(*)` of the URL match |
+| `A or B or "text"` | use the next one when a piece is empty |
+| `before "."` `after "-"` `match /re/` | keep only part of a piece |
 
-手动重命名优先于规则。glob 是整串匹配（和 shell 一致，结果可预期），正则是部分匹配（和 JS 一致）。
+The full syntax is in the [tutorial](docs/tutorial.md#5-rule-text) and on the rules page.
 
-## 测试
+## Privacy
+
+tabmv has no server and sends nothing anywhere. Rules are stored with `chrome.storage.sync`, so Chrome syncs them between your own devices. See [PRIVACY.md](PRIVACY.md).
+
+## Development
 
 ```sh
-npm test                       # 规则引擎单测，只需要 Node
-npm i && CHROME=".../Google Chrome for Testing" npm run e2e
+npm ci
+npm test            # rule engine unit tests (Node only)
+npm run check       # syntax and JSON checks
+npm run build       # dist/tabmv-<version>.zip
+CHROME=".../Google Chrome for Testing" npm run e2e   # real-browser test
 ```
 
-e2e 用真实浏览器加载扩展，验证：页面元素晚渲染时先用 URL 兜底、渲染后换成页面文字；在侧边栏把页面文字、手打文字和网址片段组合起来并保存；页面文字消失后这一段改用网址参数；重新打开侧边栏能载入并更新这条规则；规则改名、页面改标题后保持、生成 favicon、`pushState` 后重算、`$title` 取页面原标题、手动重命名在刷新后保留、删规则后恢复原标题。品牌版 Chrome 137 起忽略 `--load-extension`，要用 Chrome for Testing：`npx @puppeteer/browsers install chrome@stable`。
+The browser test needs Chrome for Testing (`npx @puppeteer/browsers install chrome@stable`), because branded Chrome ignores `--load-extension`. Set `E2E_LANG=zh-CN` to run the UI in Chinese.
 
-## 限制和后续
+- [How the code fits together](docs/architecture.md): a walk-through of the repo for new contributors.
+- [Publishing](docs/publishing.md): GitHub Actions, releases and the Chrome Web Store.
+- [Changelog](CHANGELOG.md)
 
-- `chrome://`、扩展商店、PDF 查看器等页面不能注入脚本，改不了。
-- 页面 CSP 极严格时 favicon 可能不显示，标题不受影响。
-- glob 里的 `?` 是通配符；粘贴带 `?` 的 URL 仍能匹配，只是更宽，需要严格时写 `\?`。
-- 没做 zsh 的 `#` / `##` 重复符，因为 `#` 在 URL 里是 fragment。
-- 点选得到的选择器在页面改版后可能失效，这时会自动落到下一个来源，侧边栏会显示“暂时取不到”。
-- 侧边栏能完整编辑的是它自己生成的那些写法；手写的复杂规则（多级 `or`、多个变换）也能载入和保存，但部分细节只能在“高级：规则文本”里改。
-- 后续可加：`group=$1` 把命中的标签放进同名 Chrome 标签组并着色；规则命中统计；从弹窗点击 URL 片段直接生成捕获组。
+## License
+
+[MIT](LICENSE)

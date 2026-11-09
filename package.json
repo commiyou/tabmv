@@ -1,13 +1,24 @@
 {
   "name": "tabmv",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Chrome extension: rename tab titles and favicons with zmv-style glob or regex rules",
   "scripts": {
     "test": "node --test tests/",
-    "e2e": "node scripts/e2e.cjs"
+    "check": "node scripts/check.cjs",
+    "build": "node scripts/build.cjs",
+    "e2e": "node scripts/e2e.cjs",
+    "icons": "node scripts/icons.cjs",
+    "publish:cws": "node scripts/cws-publish.cjs",
+    "version": "node scripts/sync-version.cjs && git add manifest.json",
+    "store-assets": "node scripts/store-assets.cjs"
   },
   "devDependencies": {
     "puppeteer-core": "^23.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/commiyou/tabmv.git"
   }
 }

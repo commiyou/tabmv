@@ -6,18 +6,45 @@
   const COUNT = 'rules_n';
   const CHUNK = 1500;
 
-  const DEFAULT_RULES = [
-    '# tabmv 规则：从上到下，第一条匹配的生效。  网址匹配 => 标签名 [; icon=…] [; color=…]',
+  // Shown until the user saves anything. Only comments, so nothing changes
+  // until a rule is written on purpose.
+  const DEFAULT_RULES_ZH = [
+    '# tabmv 规则：一行一条，从上到下第一条匹配的生效。平时用侧边栏就行，这里方便批量编辑。',
+    '#   网址匹配 => 标签名 [; icon=…] [; color=…]',
     '# 标签名里 {…} 是一段可变内容，其余照原样显示：',
-    '#   {page ".env-name"} 页面上的文字   {?env} 网址参数   {host[1]} {path[2]} 网址的某一段   {title} 原标题   {1} 匹配里第 1 个 (*)',
-    '#   {page "h1" or ?env before "."}  取不到就用 or 后面的；before / after / match / replace 只取一部分',
+    '#   {page ".env-name"} 页面上的文字   {?env} 网址参数   {host[1]} {path[2]} 网址的某一段',
+    '#   {title} 原标题   {1} 网址匹配里第 1 个 (*)',
+    '#   {page "h1" or ?env before "."}  取不到就用 or 后面的；before / after / match 只取一部分',
     '',
-    '# env=xxx.baidu.com -> 标签显示 xxx，每个环境一个固定颜色',
-    '*[?&]env=(*).baidu.com* => {1} ; color=auto',
+    '# 例：网址里 env=qa3.example.com -> 标签显示 qa3，每个环境一个固定颜色（去掉行首 # 生效）',
+    '# *[?&]env=(*).example.com* => {1} ; color=auto',
     '',
-    '# 优先用页面上的环境名，页面还没加载出来时用网址里的 env，后面接原标题',
-    '# *://*.baidu.com/* => [{page ".env-name" or ?env before "."}] {title}',
+    '# 例：优先用页面上的环境名，页面还没加载出来时用网址里的 env，后面接原标题',
+    '# *://*.example.com/* => [{page ".env-name" or ?env before "."}] {title}',
   ].join('\n');
+  const DEFAULT_RULES_EN = [
+    '# tabmv rules: one per line, the first matching line wins. The side panel is enough for',
+    '# everyday use; this page is for editing many rules at once.',
+    '#   URL match => tab name [; icon=…] [; color=…]',
+    '# In the tab name, {…} is filled in per page and everything else is shown as is:',
+    '#   {page ".env-name"} page text   {?env} URL parameter   {host[1]} {path[2]} part of the URL',
+    '#   {title} original title   {1} first (*) of the URL match',
+    '#   {page "h1" or ?env before "."}  use what follows "or" when empty; before / after / match keep a part',
+    '',
+    '# Example: env=qa3.example.com in the URL -> tab "qa3", one stable color per env (remove the # to enable)',
+    '# *[?&]env=(*).example.com* => {1} ; color=auto',
+    '',
+    '# Example: prefer the env name on the page, use the URL until the page has rendered, keep the title',
+    '# *://*.example.com/* => [{page ".env-name" or ?env before "."}] {title}',
+  ].join('\n');
+  const zh = (() => {
+    try {
+      return chrome.i18n.getUILanguage().toLowerCase().startsWith('zh');
+    } catch (_) {
+      return false;
+    }
+  })();
+  const DEFAULT_RULES = zh ? DEFAULT_RULES_ZH : DEFAULT_RULES_EN;
 
   async function loadRulesText() {
     const all = await chrome.storage.sync.get(null);

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "tabmv - rename tabs with glob/regex",
+  "short_name": "tabmv",
+  "version": "0.1.0",
+  "description": "Rename tab titles and favicons with zmv-style glob or regex rules, e.g. *[?&]env=(*).baidu.com* => $1",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "src/background.js" },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/rules.js", "src/store.js", "src/content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": { "default_popup": "src/popup.html", "default_title": "tabmv" },
+  "options_page": "src/options.html",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+R" },
+      "description": "Rename current tab"
+    }
+  }
+}

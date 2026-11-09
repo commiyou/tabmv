@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>tabmv rules</title>
+  <link rel="stylesheet" href="ui.css" />
+  <style>
+    body { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
+    textarea { height: 300px; white-space: pre; tab-size: 4; }
+    table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+    td, th { text-align: left; padding: 3px 6px; border-bottom: 1px solid #8883; vertical-align: top; word-break: break-all; }
+    th { color: var(--muted); font-weight: normal; }
+    .help code { background: #8882; padding: 0 3px; border-radius: 3px; }
+    .help td:first-child { white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <h2>tabmv 规则</h2>
+  <p class="muted">每行一条：<code>pattern =&gt; title [; icon=…] [; color=…]</code>，从上到下第一条命中生效，<code>#</code> 开头为注释。⌘/Ctrl+S 保存。</p>
+  <textarea id="rules" spellcheck="false"></textarea>
+  <div class="row" style="margin-top: 6px">
+    <button id="save" class="primary">保存</button>
+    <span id="msg" class="muted"></span>
+  </div>
+  <div id="errors" class="err"></div>
+
+  <h3>测试</h3>
+  <div class="row">
+    <input id="tUrl" type="text" class="mono grow" placeholder="URL" />
+    <input id="tTitle" type="text" class="grow" style="max-width: 260px" placeholder="原标题" />
+  </div>
+  <div id="tOut" class="preview mono"></div>
+
+  <h3>已打开标签预览</h3>
+  <table><thead><tr><th>行</th><th>原标题</th><th>新标题</th><th>icon / color</th></tr></thead><tbody id="tabs"></tbody></table>
+
+  <h3>语法</h3>
+  <table class="help">
+    <tr><td><code>*</code> <code>?</code> <code>[a-z]</code> <code>[!&amp;]</code></td><td>glob，整串匹配（anchored）；<code>*</code> 最短匹配；<code>\</code> 转义</td></tr>
+    <tr><td><code>{a,b}</code> <code>(a|b)</code></td><td>选择；<code>( )</code> 是捕获组，和 zmv 一样用 <code>$1</code> 引用</td></tr>
+    <tr><td>无 <code>( )</code> 时</td><td>每个 <code>*</code> / <code>?</code> / <code>[…]</code> 自动成为捕获组（zmv -W）</td></tr>
+    <tr><td><code>(#i)</code></td><td>前缀，忽略大小写（zsh glob flag）</td></tr>
+    <tr><td><code>/regex/i</code></td><td>JS 正则，部分匹配；支持 <code>(?&lt;name&gt;…)</code> → <code>$&lt;name&gt;</code></td></tr>
+    <tr><td><code>title:</code></td><td>前缀，匹配原标题而不是 URL</td></tr>
+    <tr><td><code>$1</code> <code>${12}</code> <code>$&amp;</code></td><td>捕获组 / 整个匹配</td></tr>
+    <tr><td><code>$title $url $host $path</code></td><td>原标题、URL、host、path</td></tr>
+    <tr><td><code>${q.env}</code></td><td>查询参数（也查 <code>#/route?env=</code>）</td></tr>
+    <tr><td><code>${x|filter}</code></td><td><code>upper</code> <code>lower</code> <code>trim</code> <code>max:20</code> <code>default:-</code> <code>before:.</code> <code>after:-</code> <code>s/re/rep/g</code></td></tr>
+    <tr><td><code>icon=</code></td><td>emoji、<code>letter</code>（新标题首字）、1–2 个字符、图片 URL、<code>none</code></td></tr>
+    <tr><td><code>color=</code></td><td>CSS 颜色或 <code>auto</code>（按 $1 哈希出固定颜色）；只给 color 时在原图标右下角加色点</td></tr>
+  </table>
+
+  <script src="rules.js"></script>
+  <script src="store.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

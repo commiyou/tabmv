@@ -19,6 +19,13 @@ const PAGE = `<!doctype html><html><head><title>Original</title>
   window.go = (q) => history.pushState({}, '', '/app?' + q);
 </script></body></html>`;
 
+// Stands in for a page (or a stale copy of our own content script) that
+// insists on its own title.
+const FIGHT = `<!doctype html><html><head><title>Theirs</title></head><body><h1 class="env">Env One</h1><script>
+  new MutationObserver(() => { if (document.title !== 'Theirs') document.title = 'Theirs'; })
+    .observe(document.querySelector('title'), { childList: true, characterData: true, subtree: true });
+</script></body></html>`;
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function waitFor(fn, what, ms = 4000) {
@@ -35,7 +42,7 @@ async function waitFor(fn, what, ms = 4000) {
 (async () => {
   const server = http.createServer((req, res) => {
     if (req.url.startsWith('/fav.svg')) return res.writeHead(200, { 'content-type': 'image/svg+xml' }).end(SVG);
-    res.writeHead(200, { 'content-type': 'text/html' }).end(PAGE);
+    res.writeHead(200, { 'content-type': 'text/html' }).end(req.url.startsWith('/fight') ? FIGHT : PAGE);
   });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = 'http://127.0.0.1:' + server.address().port;
@@ -87,8 +94,48 @@ async function waitFor(fn, what, ms = 4000) {
     await waitFor(async () => (await page.title()) === 'Changed by page', 'restore original title');
     console.log('ok  removing rules restores the original title');
 
-    // Side panel flow: pick an element on the page, save as a site rule.
     const extId = new URL(swTarget.url()).host;
+    const opt = await browser.newPage();
+    await opt.goto('chrome-extension://' + extId + '/src/options.html');
+    await opt.waitForSelector('#rules');
+    await opt.evaluate(() => { const t = document.getElementById('rules'); t.value = '*://127.0.0.1*/* => From options {?env}'; t.dispatchEvent(new Event('input')); });
+    await opt.click('#save');
+    await waitFor(async () => (await page.title()) === 'From options qa', 'options page save applies to open tabs');
+    assert.match(await opt.$eval('#msg', (e) => e.textContent), /1 条规则生效/);
+    await opt.close();
+    console.log('ok  rules page: Save writes the rules and open tabs update');
+
+    // A second copy of the content script (what an extension reload leaves
+    // behind) must take over instead of fighting the first one.
+    await sw.evaluate((id) => chrome.scripting.executeScript({ target: { tabId: id }, files: ['src/rules.js', 'src/store.js', 'src/picker.js', 'src/content.js'] }), tabId);
+    await setRules('*://127.0.0.1*/* => Second {?env}');
+    await waitFor(async () => (await page.title()) === 'Second qa', 'title after re-injection');
+    const titleWrites = (p) =>
+      Promise.race([
+        p.evaluate(() => new Promise((r) => { let n = 0; const mo = new MutationObserver(() => n++); mo.observe(document.querySelector('title'), { childList: true, characterData: true, subtree: true }); setTimeout(() => (mo.disconnect(), r(n)), 1000); })),
+        sleep(4000).then(() => 'FROZEN'),
+      ]);
+    assert.equal(await titleWrites(page), 0, 'no title fight after re-injection');
+    console.log('ok  re-injected content script takes over, no title fight');
+
+    // An empty page piece leaves "Mine " with a trailing space; the browser
+    // reports "Mine", and that mismatch used to loop forever.
+    await setRules('*://127.0.0.1*/* => Mine {page ".env"}');
+    await waitFor(async () => (await page.title()) === 'Mine', 'empty page piece');
+    await sleep(300);
+    assert.equal(await titleWrites(page), 0, 'no rewrite loop on whitespace');
+    console.log('ok  empty page piece: title is stable, no rewrite loop');
+    const fight = await browser.newPage();
+    await fight.goto(base + '/fight');
+    await sleep(1500);
+    const alive = await Promise.race([fight.evaluate(() => document.title), sleep(3000).then(() => 'FROZEN')]);
+    assert.notEqual(alive, 'FROZEN', 'page that resets its title stays responsive');
+    await fight.close();
+    console.log('ok  page that keeps resetting its title stays responsive (we back off)');
+    await setRules('# nothing');
+    await waitFor(async () => (await page.title()) === 'Changed by page', 'rules cleared again');
+
+    // Side panel flow: pick an element on the page, save as a site rule.
     // Open the panel in its own window so both it and the page stay visible,
     // like the real side panel next to the page.
     const panelUrl = 'chrome-extension://' + extId + '/src/panel.html?tab=' + tabId;

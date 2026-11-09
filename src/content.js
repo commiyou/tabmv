@@ -2,8 +2,20 @@
  * keeps it applied while the page rewrites its own title or favicon. */
 (() => {
   'use strict';
-  if (window.__tabmv) return;
-  window.__tabmv = true;
+  // Reloading or updating the extension leaves the old content script running
+  // ("orphaned") next to the newly injected one. Two copies fighting over
+  // document.title froze pages, so the new copy tells any old copy to stop.
+  const TAKEOVER = 'tabmv:takeover';
+  document.dispatchEvent(new CustomEvent(TAKEOVER));
+  let dead = false;
+  const alive = () => {
+    if (dead) return false;
+    try {
+      if (chrome.runtime && chrome.runtime.id) return true;
+    } catch (_) {}
+    teardown();
+    return false;
+  };
 
   const MARK = 'data-tabmv';
   const OFF_REL = 'data-tabmv-rel';
@@ -17,6 +29,24 @@
   let origIconHref = null;
   let iconBusy = 0;
 
+  // A page (or another extension) that keeps resetting the title would turn
+  // "keep our title" into an endless write loop. Allow a burst, then back off.
+  const writes = [];
+  let backoffUntil = 0;
+  function mayWrite() {
+    const now = Date.now();
+    if (now < backoffUntil) return false;
+    while (writes.length && now - writes[0] > 2000) writes.shift();
+    if (writes.length >= 15) {
+      backoffUntil = now + 10000;
+      writes.length = 0;
+      console.warn('[tabmv] this page keeps changing its title or icon; pausing for 10s');
+      return false;
+    }
+    writes.push(now);
+    return true;
+  }
+
   // ---------- favicon ----------
   function pageIconLinks() {
     return [...document.querySelectorAll('link[rel~="icon" i], link[' + OFF_REL + ']')].filter((l) => !l.hasAttribute(MARK));
@@ -29,6 +59,7 @@
   }
 
   function setIconLink(href) {
+    if (!mayWrite()) return;
     for (const l of pageIconLinks()) {
       if (!l.hasAttribute(OFF_REL)) {
         l.setAttribute(OFF_REL, l.getAttribute('rel'));
@@ -140,28 +171,42 @@
   // and a throttled body observer re-renders once the element shows up.
   function select(css) {
     try {
-      return TabPicker.textOf(document.querySelector(css));
+      const el = document.querySelector(css);
+      if (el) readEls.add(el);
+      return TabPicker.textOf(el);
     } catch (_) {
       return undefined;
     }
   }
 
+  // Elements read by the current rule. Watch the body for elements being
+  // added or replaced (childList only), and the found elements for text edits.
+  // Recompute at most every 300ms; the callback itself does no work.
   let bodyMo = null;
   let bodyTimer = 0;
+  let readEls = new Set();
+  let watchedEls = [];
+  function onBodyMutate() {
+    if (bodyTimer || dead) return;
+    bodyTimer = setTimeout(() => {
+      bodyTimer = 0;
+      if (alive()) apply();
+    }, 300);
+  }
   function watchBody(on) {
-    if (on && !bodyMo && document.body) {
-      bodyMo = new MutationObserver(() => {
-        if (bodyTimer) return;
-        bodyTimer = setTimeout(() => {
-          bodyTimer = 0;
-          apply();
-        }, 250);
-      });
-      bodyMo.observe(document.body, { childList: true, subtree: true, characterData: true });
-    } else if (!on && bodyMo) {
-      bodyMo.disconnect();
+    if (!on || !document.body) {
+      if (bodyMo) bodyMo.disconnect();
       bodyMo = null;
+      watchedEls = [];
+      return;
     }
+    const els = [...readEls];
+    if (bodyMo && els.length === watchedEls.length && els.every((e, i) => e === watchedEls[i])) return;
+    if (bodyMo) bodyMo.disconnect();
+    bodyMo = new MutationObserver(onBodyMutate);
+    bodyMo.observe(document.body, { childList: true, subtree: true });
+    for (const e of els) bodyMo.observe(e, { childList: true, subtree: true, characterData: true });
+    watchedEls = els;
   }
 
   // ---------- title ----------
@@ -179,13 +224,15 @@
   function apply() {
     // Before the parser reaches <title>, setting document.title would create a
     // second <title> that hides the page's real one; wait for DOMContentLoaded.
-    if (document.readyState === 'loading' && !document.querySelector('title')) return;
+    if (dead || (document.readyState === 'loading' && !document.querySelector('title'))) return;
+    readEls = new Set();
     result = compute();
     watchBody(Boolean(result && result.rule && result.rule.usesPage));
     const t = result && result.title !== undefined ? result.title : null;
     if (t !== null) {
+      if (t !== wantedTitle) backoffUntil = 0; // our own title changed: try again
       wantedTitle = t;
-      if (document.title !== t) document.title = t;
+      if (document.title !== t && mayWrite()) document.title = t;
     } else if (wantedTitle !== null) {
       wantedTitle = null;
       if (document.title !== pageTitle) document.title = pageTitle;
@@ -196,24 +243,29 @@
   // Watch <head>: the page changing its title/favicon must not undo ours.
   let scheduled = false;
   function onMutate() {
+    if (!alive()) return;
     const cur = document.title;
     if (wantedTitle === null || cur !== wantedTitle) {
       if (cur !== pageTitle) pageTitle = cur;
     }
     if (scheduled) return;
     scheduled = true;
-    queueMicrotask(() => {
+    // A macrotask, so a page that fights back cannot trap us in a microtask loop.
+    setTimeout(() => {
       scheduled = false;
+      if (dead) return;
       if (wantedTitle !== null && document.title !== wantedTitle) apply();
       else if (iconHref) {
         const ours = document.head && document.head.querySelector('link[' + MARK + ']');
         const stray = [...document.querySelectorAll('link[rel~="icon" i]')].some((l) => !l.hasAttribute(MARK));
         if (!ours || stray) applyIcon(result);
       }
-    });
+    }, 0);
   }
 
+  let headMo = null;
   function observeHead() {
+    if (dead) return;
     if (!document.head) {
       const mo = new MutationObserver(() => {
         if (document.head) {
@@ -224,12 +276,14 @@
       mo.observe(document.documentElement || document, { childList: true, subtree: true });
       return;
     }
-    new MutationObserver(onMutate).observe(document.head, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'rel'] });
+    headMo = new MutationObserver(onMutate);
+    headMo.observe(document.head, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'rel'] });
     pageTitle = document.title || pageTitle;
     apply();
   }
 
   async function load() {
+    if (!alive()) return;
     try {
       rules = TabRules.parseRules(await TabStore.loadRulesText()).rules;
       const ov = await chrome.runtime.sendMessage({ type: 'getOverride' });
@@ -259,7 +313,8 @@
     return { ok: true, matched: true, title: r.title, icon: r.icon, color: r.color, trace: r.trace, iconHref };
   }
 
-  chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  function onMessage(msg, _sender, reply) {
+    if (!alive()) return;
     if (msg.type === 'refresh') load();
     else if (msg.type === 'pick') TabPicker.start();
     else if (msg.type === 'stopPick') TabPicker.stop();
@@ -279,9 +334,31 @@
         override: override ? override.raw : null,
         icon: iconHref,
       });
-  });
+  }
+
+  function teardown() {
+    if (dead) return;
+    dead = true;
+    if (headMo) headMo.disconnect();
+    if (bodyMo) bodyMo.disconnect();
+    clearTimeout(bodyTimer);
+    document.removeEventListener(TAKEOVER, teardown);
+    // Hand the page back as we found it, so the next copy sees the real title.
+    try {
+      if (wantedTitle !== null && document.title === wantedTitle) document.title = pageTitle;
+      if (iconKey) restoreIcon();
+    } catch (_) {}
+    try {
+      TabPicker.stop();
+      chrome.runtime.onMessage.removeListener(onMessage);
+    } catch (_) {}
+  }
+
+  document.addEventListener(TAKEOVER, teardown);
+  chrome.runtime.onMessage.addListener(onMessage);
   TabStore.onRulesChanged(load);
   document.addEventListener('DOMContentLoaded', () => {
+    if (dead) return;
     pageTitle = wantedTitle !== null && document.title === wantedTitle ? pageTitle : document.title;
     apply();
   });

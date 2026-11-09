@@ -150,3 +150,9 @@ test('templateText round-trips v1 and v2 into canonical v2 text', () => {
     assert.equal(R.templateText(R.compileTemplate(text)), want);
   }
 });
+
+test('rendered titles use document.title whitespace rules (no write loop)', () => {
+  const { rules } = R.parseRules('*://*/* => Mine {page ".missing"}  {?env}\t!');
+  assert.equal(R.evaluate(rules, { url: 'https://a.com/?env=qa', title: 'T', select: () => undefined }).title, 'Mine qa !');
+  assert.equal(R.evaluate(rules, { url: 'https://a.com/', title: 'T', select: () => '  ' }).title, 'Mine !');
+});

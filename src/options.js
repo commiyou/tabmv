@@ -69,11 +69,22 @@
   }
 
   async function save() {
-    await TabStore.saveRulesText(ta.value);
-    saved = ta.value;
+    const text = ta.value;
+    try {
+      await TabStore.saveRulesText(text);
+      if ((await TabStore.loadRulesText()) !== text) throw new Error('读回的内容和保存的不一致');
+    } catch (e) {
+      $('msg').className = 'err';
+      $('msg').textContent = '保存失败：' + e.message;
+      return;
+    }
+    saved = text;
     update();
-    $('msg').className = 'ok';
-    $('msg').textContent = '已保存，已打开的标签会立即更新';
+    const { rules, errors } = TabRules.parseRules(text);
+    $('msg').className = errors.length ? 'err' : 'ok';
+    $('msg').textContent =
+      '已保存 ' + new Date().toLocaleTimeString() + '，' + rules.length + ' 条规则生效' +
+      (errors.length ? '；第 ' + errors.map((e) => e.lineNo).join('、') + ' 行有错误，没有生效' : '，已打开的标签会立即更新');
   }
 
   ta.addEventListener('input', update);

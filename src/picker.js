@@ -5,13 +5,21 @@
   'use strict';
   if (root.TabPicker) return;
 
+  // Reads at most ~300 characters by walking text nodes. innerText would force
+  // a layout and copy the whole subtree, which is slow on big containers.
+  const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
   function textOf(el) {
     if (!el) return undefined;
-    let t;
-    if (el.matches('input, textarea, select')) t = el.value;
-    else if (el.matches('meta')) t = el.getAttribute('content');
-    else t = el.innerText || el.textContent;
-    t = (t || '').replace(/\s+/g, ' ').trim();
+    let t = '';
+    if (el.matches('input, textarea, select')) t = el.value || '';
+    else if (el.matches('meta')) t = el.getAttribute('content') || '';
+    else {
+      const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => (n.parentElement && SKIP.has(n.parentElement.nodeName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+      });
+      for (let n = w.nextNode(); n && t.length < 400; n = w.nextNode()) t += n.data + ' ';
+    }
+    t = t.replace(/\s+/g, ' ').trim();
     return t ? t.slice(0, 300) : undefined;
   }
 

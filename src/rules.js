@@ -630,8 +630,11 @@
     const ctx = { match: match || [page.url], url: page.url, title: page.title, select: page.select, trace };
     const out = { rule };
     if (rule.title) {
-      const t = renderTemplate(rule.title, ctx);
-      if (t.trim() !== '') out.title = t;
+      // Same normalization as the document.title getter (strip and collapse
+      // ASCII whitespace). Otherwise "A  B " never equals what the page reports
+      // back, and keeping the title applied turns into an endless write loop.
+      const t = renderTemplate(rule.title, ctx).replace(/[\t\n\f\r ]+/g, ' ').trim();
+      if (t !== '') out.title = t;
     }
     out.trace = trace;
     ctx.trace = null;

@@ -17,8 +17,13 @@
 
 ## 安装
 
-- **Chrome 应用商店**：上架中。
-- **从源码安装**：在 [Releases](https://github.com/commiyou/tabmv/releases) 下载 zip 解压，或者直接克隆本仓库。打开 `chrome://extensions`，打开右上角“开发者模式”，点“加载已解压的扩展程序”，选择这个文件夹。需要 Chrome 116 或更新版本。
+tabmv 暂时还没有上架 Chrome 应用商店，请从 Release 安装：
+
+1. 在 [Releases](https://github.com/commiyou/tabmv/releases) 下载 `tabmv-<版本>.zip` 并解压（或者直接克隆本仓库）。
+2. 打开 `chrome://extensions`，打开右上角的“开发者模式”。
+3. 点“加载已解压的扩展程序”，选择解压出来的文件夹。
+
+需要 Chrome 116 或更新版本。升级时把新版本解压覆盖到原来的文件夹，在扩展卡片上点刷新按钮，再把已经打开的标签刷新一次。
 
 ## 一分钟上手
 

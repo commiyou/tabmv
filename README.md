@@ -17,8 +17,13 @@ When ten tabs all say "Dashboard" or "Order detail", you cannot tell the QA envi
 
 ## Install
 
-- **Chrome Web Store**: coming soon.
-- **From source**: download the zip from [Releases](https://github.com/commiyou/tabmv/releases) and unzip it, or clone this repo. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the folder. Needs Chrome 116 or later.
+tabmv is not in the Chrome Web Store yet. Install it from a release:
+
+1. Download `tabmv-<version>.zip` from [Releases](https://github.com/commiyou/tabmv/releases) and unzip it (or clone this repo).
+2. Open `chrome://extensions` and turn on **Developer mode** (top right).
+3. Click **Load unpacked** and choose the unzipped folder.
+
+Needs Chrome 116 or later. To update, unzip the new release over the old folder and click the reload button on the extension's card; then reload tabs that were already open.
 
 ## Use it in one minute
 

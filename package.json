@@ -4,7 +4,7 @@
   "private": true,
   "description": "Chrome extension: rename tab titles and favicons with zmv-style glob or regex rules",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test tests/*.test.js",
     "check": "node scripts/check.cjs",
     "build": "node scripts/build.cjs",
     "e2e": "node scripts/e2e.cjs",

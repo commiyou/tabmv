@@ -166,7 +166,12 @@
     if (m.groups && e in m.groups) return m.groups[e];
     if (e === 'title') return ctx.title;
     if (e === 'url') return ctx.url;
-    if (e === 'host' || e === 'path') return urlPart(ctx.url, e);
+    if (e === 'host' || e === 'path') {
+      const v = urlPart(ctx.url, e);
+      if (src.index === undefined || v === undefined) return v;
+      const segs = e === 'host' ? v.replace(/:\d+$/, '').split('.') : v.split('/').filter(Boolean);
+      return segs[src.index > 0 ? src.index - 1 : segs.length + src.index];
+    }
     return undefined;
   }
 
@@ -202,7 +207,154 @@
     return s;
   }
 
+  // ---------- v2 tokens: {page ".env" before "." or ?env or "dev"} ----------
+  // A token is one or more sources joined by "or"; the first non-empty wins.
+  // Sources:    page "css"   ?key   host  host[1]  path  path[2]  title  url  1  <name>  "text"
+  // Transforms: before "x"  after "x"  match /re/  replace /re/ "to"  upper  lower  trim  max 20
+  const V2_WORDS = ['title', 'url', 'host', 'path'];
+
+  function parseV2Token(tpl, start) {
+    let i = start;
+    const ws = () => {
+      while (tpl[i] === ' ' || tpl[i] === '\t') i++;
+    };
+    const fail = (what) => {
+      throw new Error(what + ' at "' + tpl.slice(i, i + 12) + '" in {…}');
+    };
+    const str = () => {
+      ws();
+      if (tpl[i] !== '"') fail('expected "text"');
+      let s = '';
+      i++;
+      while (i < tpl.length && tpl[i] !== '"') {
+        if (tpl[i] === '\\' && (tpl[i + 1] === '"' || tpl[i + 1] === '\\')) i++;
+        s += tpl[i++];
+      }
+      if (tpl[i] !== '"') fail('unclosed quote');
+      i++;
+      return s;
+    };
+    const regex = () => {
+      ws();
+      if (tpl[i] !== '/') fail('expected /regex/');
+      let s = '';
+      i++;
+      while (i < tpl.length && tpl[i] !== '/') {
+        if (tpl[i] === '\\' && i + 1 < tpl.length) s += tpl[i++];
+        s += tpl[i++];
+      }
+      if (tpl[i] !== '/') fail('unclosed /regex/');
+      i++;
+      let fl = '';
+      while (/[gimsu]/.test(tpl[i] || '')) fl += tpl[i++];
+      return new RegExp(s, fl);
+    };
+    const word = () => {
+      const m = /^[A-Za-z]+/.exec(tpl.slice(i));
+      if (m) i += m[0].length;
+      return m ? m[0] : '';
+    };
+    const source = () => {
+      ws();
+      const c = tpl[i];
+      if (c === '"') return { lit: str() };
+      if (c === '?') {
+        const m = /^\?([^\s{}"]+)/.exec(tpl.slice(i));
+        if (!m) fail('expected ?param');
+        i += m[0].length;
+        return { expr: 'q.' + m[1] };
+      }
+      if (c === '<') {
+        const end = tpl.indexOf('>', i);
+        if (end < 0) fail('unclosed <name>');
+        const name = tpl.slice(i + 1, end);
+        i = end + 1;
+        return { expr: name };
+      }
+      const d = /^\d+/.exec(tpl.slice(i));
+      if (d) {
+        i += d[0].length;
+        return { expr: d[0] };
+      }
+      const w = word();
+      if (w === 'page') return { sel: str() };
+      if (V2_WORDS.includes(w)) {
+        const ix = /^\[(-?\d+)\]/.exec(tpl.slice(i));
+        if (ix && (w === 'host' || w === 'path')) {
+          i += ix[0].length;
+          return { expr: w, index: Number(ix[1]) };
+        }
+        return { expr: w };
+      }
+      return fail('unknown source "' + w + '"');
+    };
+    const alts = [];
+    for (;;) {
+      const alt = source();
+      alt.filters = [];
+      for (;;) {
+        ws();
+        if (tpl[i] === '}' || i >= tpl.length) break;
+        const save = i;
+        const w = word();
+        if (w === 'or') break;
+        if (w === 'before' || w === 'after' || w === 'default') alt.filters.push({ name: w, arg: str() });
+        else if (w === 'match') {
+          const re = regex();
+          alt.filters.push({ m: new RegExp(re.source, re.flags.replace('g', '')) });
+        } else if (w === 'replace') {
+          const re = regex();
+          alt.filters.push({ sed: { re, rep: str() } });
+        } else if (w === 'max') {
+          ws();
+          const n = /^\d+/.exec(tpl.slice(i));
+          if (!n) fail('expected a number');
+          i += n[0].length;
+          alt.filters.push({ name: 'max', arg: n[0] });
+        } else if (w === 'upper' || w === 'lower' || w === 'trim') alt.filters.push({ name: w, arg: '' });
+        else {
+          i = save;
+          fail('unknown word');
+        }
+      }
+      alts.push(alt);
+      if (tpl[i] === '}') break;
+      if (i >= tpl.length) throw new Error('unclosed "{" in title (write {{ for a literal brace)');
+    }
+    return { alts, end: i + 1 };
+  }
+
+  // ---------- serialize back to v2 text (used by the side panel) ----------
+  const quoteStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  const reText = (re) => '/' + re.source + '/' + re.flags;
+
+  function altText(a) {
+    let s;
+    if (a.lit !== undefined) s = quoteStr(a.lit);
+    else if (a.sel !== undefined) s = 'page ' + quoteStr(a.sel);
+    else if (a.expr.startsWith('q.')) s = '?' + a.expr.slice(2);
+    else if (a.expr === '&') s = '0';
+    else if (/^\d+$/.test(a.expr) || V2_WORDS.includes(a.expr)) s = a.expr + (a.index !== undefined ? '[' + a.index + ']' : '');
+    else s = '<' + a.expr + '>';
+    for (const f of a.filters || []) {
+      if (f.m) s += ' match ' + reText(f.m);
+      else if (f.sed) s += ' replace ' + reText(f.sed.re) + ' ' + quoteStr(f.sed.rep);
+      else if (f.name === 'max') s += ' max ' + f.arg;
+      else if (f.arg !== '' || ['before', 'after', 'default'].includes(f.name)) s += ' ' + f.name + ' ' + quoteStr(f.arg);
+      else s += ' ' + f.name;
+    }
+    return s;
+  }
+
+  const tokenText = (alts) => '{' + alts.map(altText).join(' or ') + '}';
+  const escapeLiteral = (s) => String(s).replace(/\{/g, '{{').replace(/\}/g, '}}');
+
+  function templateText(parts) {
+    return parts.map((p) => (typeof p === 'string' ? escapeLiteral(p) : tokenText(p.alts))).join('');
+  }
+
   // Compiles to a list of strings and {alts: [{expr|sel|lit, filters}]}.
+  // Accepts v2 {…} tokens and the older $1 / ${…} forms.
   function compileTemplate(tpl) {
     const parts = [];
     let lit = '';
@@ -279,7 +431,14 @@
     while (i < tpl.length) {
       const c = tpl[i];
       const n = tpl[i + 1];
-      if (c !== '$') {
+      if ((c === '{' && n === '{') || (c === '}' && n === '}')) {
+        lit += c;
+        i += 2;
+      } else if (c === '{') {
+        const r = parseV2Token(tpl, i + 1);
+        push(r.alts);
+        i = r.end;
+      } else if (c !== '$') {
         lit += c;
         i++;
       } else if (n === '$') {
@@ -415,7 +574,7 @@
     if (!left) throw new Error('empty pattern');
     const { kind, re } = compilePattern(left);
     const [titleRaw, ...opts] = splitUnescaped(right, ';');
-    const rule = { line, field, kind, re, pattern: left };
+    const rule = { line, field, kind, re, pattern: left, raw: { pattern: line.slice(0, arrow.index).trim(), title: titleRaw.trim() } };
     const title = titleRaw.trim();
     if (title) {
       rule.title = compileTemplate(title);
@@ -429,6 +588,7 @@
       if (!OPTION_KEYS.includes(key)) throw new Error('unknown option "' + key + '" (use icon= or color=)');
       const val = eq < 0 ? '' : o.slice(eq + 1).trim();
       rule[key] = compileTemplate(val);
+      rule.raw[key] = val;
       checkVars(rule[key], re, key);
     }
     return rule;
@@ -556,6 +716,9 @@
     queryKeys,
     autoColor,
     usesPage,
+    tokenText,
+    templateText,
+    escapeLiteral,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TabRules = api;

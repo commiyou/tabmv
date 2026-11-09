@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="panel.css" />
 </head>
 <body>
-  <div class="tab-preview" title="保存后标签会长这样">
+  <div class="tab-preview" title="标签会显示成这样">
     <img id="pvIcon" alt="" />
     <span id="pvTitle">…</span>
   </div>
@@ -15,45 +15,40 @@
   <div id="blocked" class="card warn" hidden>这个页面（浏览器设置页、扩展商店等）不允许扩展修改，换一个普通网页试试。</div>
 
   <section>
-    <h3><span class="step">1</span>标签显示什么</h3>
-    <ol id="sources" class="sources"></ol>
-    <div class="add">
-      <button id="pick" class="primary">👆 从页面上点选文字</button>
-      <button id="addText">✏️ 自己写</button>
+    <h3>标签名</h3>
+    <div id="composer" class="composer" contenteditable="true" spellcheck="false" data-placeholder="直接输入名字，或插入下面的内容"></div>
+    <div class="insert">
+      <button id="pick">👆 页面上的文字</button>
+      <button id="fromUrl">🔗 网址里的一段</button>
       <button id="addTitle">📄 原标题</button>
     </div>
-    <div id="urlChips" class="chips"></div>
-    <p class="hint">从上往下试，第一个有值的就用。页面还没加载完、或者找不到那段文字时，会先用下一个；加载好后自动换回来。</p>
+    <div id="urlPieces" class="url-pieces" hidden></div>
+    <div id="tokenCard" class="card token-card" hidden></div>
   </section>
 
   <section>
-    <h3><span class="step">2</span>样式</h3>
-    <div id="formats" class="seg"></div>
-  </section>
-
-  <section>
-    <h3><span class="step">3</span>图标</h3>
-    <div class="sub">色点</div>
-    <div id="colors" class="swatches"></div>
-    <div class="sub">图标</div>
-    <div id="icons" class="swatches"></div>
-    <input id="iconCustom" type="text" placeholder="其他 emoji、1–2 个字，或图片网址" />
-  </section>
-
-  <section>
-    <h3><span class="step">4</span>用在哪些页面</h3>
-    <div id="scopes" class="scopes"></div>
-    <input id="customPattern" type="text" class="mono" hidden />
+    <h3>应用于</h3>
+    <select id="scope"></select>
+    <input id="customPattern" type="text" class="mono" hidden placeholder="*://*.baidu.com/*  或  /正则/" />
     <div id="scopeCheck" class="sub"></div>
   </section>
 
+  <details id="iconBox">
+    <summary>图标 <span id="iconSummary" class="sub"></span></summary>
+    <div class="sub">色点</div>
+    <div id="colors" class="swatches"></div>
+    <div class="sub">换成</div>
+    <div id="icons" class="swatches"></div>
+    <input id="iconCustom" type="text" placeholder="其他 emoji、1–2 个字，或图片网址" />
+  </details>
+
   <div id="summary" class="card summary"></div>
-  <label id="replaceRow" class="check" hidden><input id="replace" type="checkbox" /> <span id="replaceText"></span></label>
   <div class="actions">
     <button id="save" class="primary big">保存</button>
+    <button id="saveNew" hidden>另存为新规则</button>
     <button id="reset">恢复原样</button>
-    <span id="msg"></span>
   </div>
+  <div id="msg" class="msg"></div>
 
   <details id="adv">
     <summary>高级：规则文本</summary>

@@ -96,44 +96,82 @@ async function waitFor(fn, what, ms = 4000) {
     const panel = await (await browser.waitForTarget((t) => t.url() === panelUrl)).page();
     await panel.setViewport({ width: 400, height: 1100 });
     await panel.waitForSelector('#pick:not([disabled])');
-    await panel.click('#pick');
-    await sleep(200);
-    const box = await page.$eval('span.owner', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
-    await page.mouse.move(box.x, box.y);
-    await page.mouse.click(box.x, box.y);
-    await panel.waitForFunction(() => document.querySelector('#sources li .detail')?.textContent === 'span.owner', { timeout: 5000 });
-    await panel.waitForFunction(() => document.getElementById('pvTitle').textContent === 'Alice');
+    const measure = () => page.$eval('span.owner', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    const pickOwner = async () => {
+      await panel.click('#pick');
+      await sleep(200);
+      const box = await measure();
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.click(box.x, box.y);
+      await panel.waitForFunction(() => document.querySelector('#composer .tk') && !document.getElementById('tokenCard').hidden, { timeout: 5000 });
+    };
+    const chooseOption = (prefix) =>
+      panel.evaluate((prefix) => {
+        for (const s of document.querySelectorAll('#tokenCard select')) {
+          const o = [...s.options].find((o) => o.textContent.startsWith(prefix));
+          if (o) {
+            s.value = o.value;
+            s.dispatchEvent(new Event('change'));
+            return true;
+          }
+        }
+        return false;
+      }, prefix);
+
+    // 1. pick text on the page -> chip, card opens; 2. fall back to ?env
+    await pickOwner();
+    assert.ok(await chooseOption('用网址里的参数 env'), 'fallback option exists');
+    await sleep(300);
+    // 3. type literal text after the chip; 4. insert a piece of the URL
+    await panel.click('#tokenCard .btns .primary');
+    await panel.focus('#composer');
+    await panel.evaluate(() => { const c = document.getElementById('composer'); const r = document.createRange(); r.selectNodeContents(c); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r); });
+    await panel.keyboard.type(' @ ');
+    await panel.click('#fromUrl');
+    await panel.evaluate(() => [...document.querySelectorAll('#urlPieces .p')].find((p) => p.textContent === 'app').click());
+    await panel.waitForFunction(() => document.getElementById('pvTitle').textContent === 'Alice @ app');
     const summary = await panel.$eval('#summary', (e) => e.textContent);
-    assert.match(summary, /127\.0\.0\.1:\d+ 的任何页面.*页面上「Alice」那段文字/);
+    assert.match(summary, /以后打开 127\.0\.0\.1:\d+ 的所有页面，标签会显示成 「Alice @ app」/);
+    assert.match(summary, /页面上的文字取不到时，用网址里的参数 env/);
     await panel.click('#save');
-    await waitFor(async () => (await page.title()) === 'Alice', 'rule saved from the panel');
+    await waitFor(async () => (await page.title()) === 'Alice @ app', 'rule saved from the panel');
     const first = (await sw.evaluate(() => TabStore.loadRulesText())).split('\n')[0];
-    assert.match(first, /^\*:\/\/127\.0\.0\.1:\d+\/\* => \$\{sel:"span\.owner"\}$/);
-    console.log('ok  panel: pick element on page -> preview -> save rule:', first);
+    assert.match(first, /^\*:\/\/127\.0\.0\.1:\d+\/\* => \{page "span\.owner" or \?env\} @ \{path\[1\]\}$/);
+    console.log('ok  panel: page text + typed text + URL piece composed, saved as:', first);
+
+    await page.evaluate(() => document.querySelector('span.owner').remove());
+    await waitFor(async () => (await page.title()) === 'qa @ app', 'per-piece fallback to ?env');
+    await panel.waitForFunction(() => document.querySelector('#composer .tk.fb'));
+    console.log('ok  page text gone -> that piece falls back to the URL, chip turns amber');
+
+    await panel.reload();
+    await panel.waitForFunction(() => document.querySelectorAll('#composer .tk').length === 2 && document.getElementById('save').textContent === '更新规则');
+    console.log('ok  reopening the panel loads the controlling rule back for editing');
 
     if (process.env.SHOTS) {
-      await setRules((await sw.evaluate(() => TabStore.DEFAULT_RULES)) + '\n/browse\\/(?<key>[A-Z]+-\\d+)/ => $<key> ${title|s/ - Jira$//} ; icon=🐞');
+      await setRules((await sw.evaluate(() => TabStore.DEFAULT_RULES)) + '\n/browse\\/(?<key>[A-Z]+-\\d+)/ => {<key>} {title replace / - Jira$/ ""} ; icon=🐞');
       const opt = await browser.newPage();
       await opt.setViewport({ width: 1000, height: 1300 });
       await page.goto(base + '/app?id=3&env=sandbox01.baidu.com&x=1');
       await opt.goto('chrome-extension://' + extId + '/src/options.html');
       await sleep(500);
       await opt.screenshot({ path: path.join(process.env.SHOTS, 'options.png') });
+      await setRules('# empty');
+      await sleep(1500); // let the late <h1> render
       await panel.reload();
       await panel.waitForSelector('#pick:not([disabled])');
-      await panel.click('#pick');
-      await sleep(1500); // let the late <h1> render, then re-measure
-      Object.assign(box, await page.$eval('span.owner', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
-      await page.mouse.move(box.x, box.y);
-      await page.mouse.click(box.x, box.y);
-      await panel.waitForFunction(() => document.querySelector('#sources li .detail'));
-      await panel.evaluate(() => [...document.querySelectorAll('#urlChips .chip')].find((b) => b.textContent.startsWith('env'))?.click());
+      await pickOwner();
+      await chooseOption('用网址里的参数 env');
       await sleep(300);
-      await panel.evaluate(() => [...document.querySelectorAll('#colors button')].find((b) => b.title === '自动')?.click());
-      await sleep(600);
+      await panel.evaluate(() => { const c = document.getElementById('composer'); const r = document.createRange(); r.selectNodeContents(c); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r); });
+      await panel.keyboard.type(' · ');
+      await panel.evaluate(() => document.getElementById('addTitle').click());
+      await sleep(200);
+      await panel.evaluate(() => document.querySelector('#composer .tk').click());
+      await panel.evaluate(() => [...document.querySelectorAll('#colors button')].find((b) => b.title === '自动配色')?.click());
+      await panel.evaluate(() => (document.getElementById('iconBox').open = true));
+      await sleep(800);
       await panel.screenshot({ path: path.join(process.env.SHOTS, 'panel.png'), fullPage: true });
-      const fav = await page.$eval('link[data-tabmv]', (l) => l.href);
-      require('node:fs').writeFileSync(path.join(process.env.SHOTS, 'favicon.png'), Buffer.from(fav.split(',')[1], 'base64'));
     }
     console.log('e2e passed');
   } finally {

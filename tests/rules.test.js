@@ -108,3 +108,45 @@ test('empty result keeps the page title', () => {
   const { rules } = R.parseRules('*://*/* => ${sel:h1 || q.nope}');
   assert.equal(R.evaluate(rules, { url: 'https://a.com/', title: 'Home' }).title, undefined);
 });
+
+test('v2 tokens: compose page text, URL pieces and the original title', () => {
+  const line = '*://*.baidu.com/* => [{page ".env" or ?env before "."}] {page "h1" max 12} · {path[1]} {{x}}';
+  const { rules, errors } = R.parseRules(line);
+  assert.deepEqual(errors, []);
+  const url = 'https://sandbox01.baidu.com/orders/42?env=qa3.baidu.com';
+  const dom = { h1: 'Order #42 from Alice' };
+  const r = R.evaluate(rules, { url, title: 'T', select: (c) => dom[c] });
+  assert.equal(r.title, '[qa3] Order #42 f… · orders {x}');
+  assert.equal(R.evaluate(rules, { url, title: 'T', select: (c) => ({ '.env': 'Prod-A', h1: 'Hi' })[c] }).title, '[Prod-A] Hi · orders {x}');
+});
+
+test('v2 host[N] / path[N] segments, negative index, captures', () => {
+  const page = { url: 'https://a.sandbox01.baidu.com:8080/x/y/z', title: 'T' };
+  const run2 = (tpl) => R.renderRule(R.compileOverride({ title: tpl }), page).title;
+  assert.equal(run2('{host[2]}'), 'sandbox01');
+  assert.equal(run2('{host[-2]}'), 'baidu');
+  assert.equal(run2('{path[-1]}/{path[1]}'), 'z/x');
+  assert.equal(run2('{path[9] or "none"}'), 'none');
+  assert.equal(run('*://(*).x.com/* => {1 upper}', 'https://qa.x.com/').title, 'QA');
+});
+
+test('v2 transforms and errors', () => {
+  const page = { url: 'https://x/?id=PROJ-12_draft', title: 'Bug: login - Jira' };
+  const run2 = (tpl) => R.renderRule(R.compileOverride({ title: tpl }), page).title;
+  assert.equal(run2('{?id match /([A-Z]+-\\d+)/} {title after ": " replace / - Jira$/ ""}'), 'PROJ-12 login');
+  assert.equal(run2('{?missing or title before ":"}'), 'Bug');
+  assert.throws(() => R.compileTemplate('{nope}'), /unknown source/);
+  assert.throws(() => R.compileTemplate('{title'), /unclosed/);
+});
+
+test('templateText round-trips v1 and v2 into canonical v2 text', () => {
+  for (const [src, want] of [
+    ['${sel:"span.owner" || q.env|before:.} · $title', '{page "span.owner" or ?env before "."} · {title}'],
+    ['[$1] {host[1]} {{lit}}', '[{1}] {host[1]} {{lit}}'],
+    ['{page "a \\"b\\"" match /#(\\d+)/ or "?"}', '{page "a \\"b\\"" match /#(\\d+)/ or "?"}'],
+  ]) {
+    const text = R.templateText(R.compileTemplate(src));
+    assert.equal(text, want);
+    assert.equal(R.templateText(R.compileTemplate(text)), want);
+  }
+});

@@ -7,18 +7,16 @@
   const CHUNK = 1500;
 
   const DEFAULT_RULES = [
-    '# tabmv rules: first match wins. Syntax: <pattern> => <title> [; icon=..] [; color=..]',
-    '# glob: *  ?  [abc]  {a,b}  (capture)  (#i)case-insensitive   regex: /.../i',
-    '# vars: $1 $<name> $title $host $path ${q.env}  filters: ${1|upper} ${q.env|before:.} ${title|s/ - .*//}',
+    '# tabmv 规则：从上到下，第一条匹配的生效。  网址匹配 => 标签名 [; icon=…] [; color=…]',
+    '# 标签名里 {…} 是一段可变内容，其余照原样显示：',
+    '#   {page ".env-name"} 页面上的文字   {?env} 网址参数   {host[1]} {path[2]} 网址的某一段   {title} 原标题   {1} 匹配里第 1 个 (*)',
+    '#   {page "h1" or ?env before "."}  取不到就用 or 后面的；before / after / match / replace 只取一部分',
     '',
-    '# env=xxx.baidu.com  ->  title "xxx", stable color per env',
-    '*[?&]env=(*).baidu.com* => $1 ; color=auto',
+    '# env=xxx.baidu.com -> 标签显示 xxx，每个环境一个固定颜色',
+    '*[?&]env=(*).baidu.com* => {1} ; color=auto',
     '',
-    '# prefer text on the page, fall back to the URL while it is still loading',
-    '# *://*.baidu.com/* => ${sel:".env-name" || q.env|before:.}',
-    '',
-    '# keep the page title, add a prefix',
-    '# *://*.baidu.com/* => [${q.env|before:.}] $title',
+    '# 优先用页面上的环境名，页面还没加载出来时用网址里的 env，后面接原标题',
+    '# *://*.baidu.com/* => [{page ".env-name" or ?env before "."}] {title}',
   ].join('\n');
 
   async function loadRulesText() {

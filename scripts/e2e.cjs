@@ -56,6 +56,8 @@ async function waitFor(fn, what, ms = 4000) {
   const browser = await puppeteer.launch({
     executablePath: process.env.CHROME,
     headless: process.env.HEADFUL ? false : 'new',
+    // Linux Chrome takes its UI language from the environment rather than --lang.
+    env: process.env.E2E_LANG ? { ...process.env, LANGUAGE: process.env.E2E_LANG.replace('-', '_'), LANG: process.env.E2E_LANG.replace('-', '_') + '.UTF-8' } : process.env,
     args: [
       '--disable-features=DisableLoadExtensionCommandLineSwitch',
       '--disable-extensions-except=' + EXT,
@@ -72,6 +74,7 @@ async function waitFor(fn, what, ms = 4000) {
     const lang = await sw.evaluate(() => chrome.i18n.getUILanguage());
     MSG = JSON.parse(require('node:fs').readFileSync(path.join(EXT, '_locales', /^zh/i.test(lang) ? 'zh_CN' : 'en', 'messages.json'), 'utf8'));
     console.log('UI language:', lang);
+    if (process.env.E2E_LANG) assert.equal(lang.slice(0, 2), process.env.E2E_LANG.slice(0, 2), 'browser did not switch UI language');
     const setRules = (text) => sw.evaluate((t) => TabStore.saveRulesText(t), text);
 
     await setRules('*[?&]env=(*).baidu.com* => ${sel:"h1.env-name" || 1} ; color=auto\n*://*/* => [${q.env|default:prod}] $title');
@@ -118,6 +121,8 @@ async function waitFor(fn, what, ms = 4000) {
     await opt.evaluate(() => { const t = document.getElementById('rules'); t.value = '*://127.0.0.1*/* => From options {?env}'; t.dispatchEvent(new Event('input')); });
     await opt.click('#save');
     await waitFor(async () => (await page.title()) === 'From options qa', 'options page save applies to open tabs');
+    // The open tab can update before the rules page has finished reading the text back.
+    await opt.waitForFunction(() => document.getElementById('msg').textContent !== '');
     assert.match(await opt.$eval('#msg', (e) => e.textContent), new RegExp(esc(M('o_saved', 'X', 1)).replace('X', '.*')));
     await opt.close();
     console.log('ok  rules page: Save writes the rules and open tabs update');

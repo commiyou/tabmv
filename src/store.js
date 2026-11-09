@@ -14,6 +14,9 @@
     '# env=xxx.baidu.com  ->  title "xxx", stable color per env',
     '*[?&]env=(*).baidu.com* => $1 ; color=auto',
     '',
+    '# prefer text on the page, fall back to the URL while it is still loading',
+    '# *://*.baidu.com/* => ${sel:".env-name" || q.env|before:.}',
+    '',
     '# keep the page title, add a prefix',
     '# *://*.baidu.com/* => [${q.env|before:.}] $title',
   ].join('\n');

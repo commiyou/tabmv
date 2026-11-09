@@ -125,11 +125,13 @@
   }
 
   // ---------- template ----------
-  // $1..$9 ${12} $0/$& whole match  $<name> ${name} named group
-  // $title $url $host $path  ${q.KEY} query param (also looks in #hash?query)
-  // ${expr|filter|...}: upper lower trim max:N default:TEXT before:X after:X s/re/rep/flags
-  // $$ literal $
+  // $1..$9 ${12} $& whole match   $<name> ${name} named group   $$ literal $
+  // $title $url $host $path       ${q.KEY} query param (also #/route?KEY=)
+  // ${sel:CSS} / ${sel:"CSS"}     text of the first element matching CSS on the page
+  // ${a || b || "text"}           fallback: the first non-empty alternative wins
+  // filters ${x|f|f}: upper lower trim max:N default:T before:X after:X s/re/rep/g m/re/
   const BUILTINS = ['title', 'url', 'host', 'path'];
+  const FILTERS = ['upper', 'lower', 'trim', 'max', 'default', 'before', 'after'];
 
   function queryParam(url, key) {
     try {
@@ -153,21 +155,28 @@
     }
   }
 
-  function lookup(expr, ctx) {
+  function lookup(src, ctx) {
+    if (src.lit !== undefined) return src.lit;
+    if (src.sel !== undefined) return ctx.select ? ctx.select(src.sel) : undefined;
+    const e = src.expr;
     const m = ctx.match || [];
-    if (/^\d+$/.test(expr)) return m[Number(expr)];
-    if (expr === '&') return m[0];
-    if (expr.startsWith('q.')) return queryParam(ctx.url, expr.slice(2));
-    if (m.groups && expr in m.groups) return m.groups[expr];
-    if (expr === 'title') return ctx.title;
-    if (expr === 'url') return ctx.url;
-    if (expr === 'host' || expr === 'path') return urlPart(ctx.url, expr);
+    if (/^\d+$/.test(e)) return m[Number(e)];
+    if (e === '&') return m[0];
+    if (e.startsWith('q.')) return queryParam(ctx.url, e.slice(2));
+    if (m.groups && e in m.groups) return m.groups[e];
+    if (e === 'title') return ctx.title;
+    if (e === 'url') return ctx.url;
+    if (e === 'host' || e === 'path') return urlPart(ctx.url, e);
     return undefined;
   }
 
   function applyFilter(v, f) {
     const s = v == null ? '' : String(v);
     if (f.sed) return s.replace(f.sed.re, f.sed.rep);
+    if (f.m) {
+      const r = f.m.exec(s);
+      return r ? r[1] ?? r[0] : '';
+    }
     switch (f.name) {
       case 'upper':
         return s.toUpperCase();
@@ -190,82 +199,128 @@
         return k < 0 ? s : s.slice(k + f.arg.length);
       }
     }
-    throw new Error('unknown filter "' + f.name + '"');
+    return s;
   }
 
-  // Compile a template into a list of parts: strings and {expr, filters}.
+  // Compiles to a list of strings and {alts: [{expr|sel|lit, filters}]}.
   function compileTemplate(tpl) {
     const parts = [];
     let lit = '';
     let i = 0;
-    const push = (p) => {
+    const push = (alts) => {
       if (lit) parts.push(lit);
       lit = '';
-      parts.push(p);
+      parts.push({ alts });
     };
+    const skipSpaces = () => {
+      while (tpl[i] === ' ') i++;
+    };
+    const quoted = () => {
+      // tpl[i] === '"'
+      let s = '';
+      i++;
+      while (i < tpl.length && tpl[i] !== '"') {
+        if (tpl[i] === '\\' && tpl[i + 1] === '"') i++;
+        s += tpl[i++];
+      }
+      if (tpl[i] !== '"') throw new Error('unclosed quote in template');
+      i++;
+      return s;
+    };
+    const until = () => {
+      let s = '';
+      while (i < tpl.length && tpl[i] !== '|' && tpl[i] !== '}') s += tpl[i++];
+      return s;
+    };
+    const delimited = (d) => {
+      let s = '';
+      while (i < tpl.length && tpl[i] !== d) {
+        if (tpl[i] === '\\' && tpl[i + 1] === d) {
+          s += d;
+          i += 2;
+        } else s += tpl[i++];
+      }
+      if (tpl[i] !== d) throw new Error('unterminated ' + d + '...' + d + ' filter');
+      i++;
+      return s;
+    };
+    const source = () => {
+      skipSpaces();
+      if (tpl[i] === '"') return { lit: quoted() };
+      if (tpl.startsWith('sel:', i)) {
+        i += 4;
+        skipSpaces();
+        const sel = tpl[i] === '"' ? quoted() : until().trim();
+        if (!sel) throw new Error('empty selector in sel:');
+        return { sel };
+      }
+      return { expr: until().trim() };
+    };
+    const filter = () => {
+      skipSpaces();
+      const k = tpl[i];
+      const d = tpl[i + 1];
+      if ((k === 's' || k === 'm') && d && /[^\w\s|}]/.test(d)) {
+        i += 2;
+        const re = delimited(d);
+        const rep = k === 's' ? delimited(d) : null;
+        let fl = '';
+        while (/[gimsu]/.test(tpl[i] || '')) fl += tpl[i++];
+        if (k === 'm') fl = fl.replace('g', '');
+        return k === 's' ? { sed: { re: new RegExp(re, fl), rep } } : { m: new RegExp(re, fl) };
+      }
+      const f = until();
+      const colon = f.indexOf(':');
+      const name = (colon < 0 ? f : f.slice(0, colon)).trim();
+      if (!FILTERS.includes(name)) throw new Error('unknown filter "' + name + '"');
+      return { name, arg: colon < 0 ? '' : f.slice(colon + 1).trimEnd() };
+    };
+
     while (i < tpl.length) {
       const c = tpl[i];
+      const n = tpl[i + 1];
       if (c !== '$') {
         lit += c;
         i++;
-        continue;
-      }
-      const n = tpl[i + 1];
-      if (n === '$') {
+      } else if (n === '$') {
         lit += '$';
         i += 2;
       } else if (n === '&' || (n >= '0' && n <= '9')) {
-        push({ expr: n === '&' ? '&' : n, filters: [] });
+        push([{ expr: n, filters: [] }]);
         i += 2;
       } else if (n === '<') {
         const end = tpl.indexOf('>', i);
         if (end < 0) throw new Error('unclosed "$<"');
-        push({ expr: tpl.slice(i + 2, end), filters: [], named: true });
+        push([{ expr: tpl.slice(i + 2, end), filters: [] }]);
         i = end + 1;
       } else if (n === '{') {
         i += 2;
-        let expr = '';
-        while (i < tpl.length && tpl[i] !== '|' && tpl[i] !== '}') expr += tpl[i++];
-        const filters = [];
-        while (tpl[i] === '|') {
-          i++;
-          if (tpl[i] === 's' && tpl[i + 1] && /[^\w\s|}]/.test(tpl[i + 1])) {
-            const d = tpl[i + 1];
-            i += 2;
-            const fields = [];
-            for (let k = 0; k < 2; k++) {
-              let f = '';
-              while (i < tpl.length && tpl[i] !== d) {
-                if (tpl[i] === '\\' && tpl[i + 1] === d) {
-                  f += d;
-                  i += 2;
-                } else f += tpl[i++];
-              }
-              if (tpl[i] !== d) throw new Error('unterminated s' + d + '...' + d + ' filter');
-              i++;
-              fields.push(f);
+        const alts = [];
+        for (;;) {
+          const alt = source();
+          alt.filters = [];
+          let more = false;
+          skipSpaces();
+          while (tpl[i] === '|') {
+            if (tpl[i + 1] === '|') {
+              i += 2;
+              more = true;
+              break;
             }
-            let fl = '';
-            while (/[gimsu]/.test(tpl[i] || '')) fl += tpl[i++];
-            filters.push({ sed: { re: new RegExp(fields[0], fl), rep: fields[1] } });
-          } else {
-            let f = '';
-            while (i < tpl.length && tpl[i] !== '|' && tpl[i] !== '}') f += tpl[i++];
-            const colon = f.indexOf(':');
-            const name = colon < 0 ? f.trim() : f.slice(0, colon).trim();
-            const arg = colon < 0 ? '' : f.slice(colon + 1);
-            if (!['upper', 'lower', 'trim', 'max', 'default', 'before', 'after'].includes(name))
-              throw new Error('unknown filter "' + name + '"');
-            filters.push({ name, arg });
+            i++;
+            alt.filters.push(filter());
+            skipSpaces();
           }
+          alts.push(alt);
+          if (!more) break;
         }
         if (tpl[i] !== '}') throw new Error('unclosed "${"');
         i++;
-        push({ expr: expr.trim(), filters });
+        push(alts);
       } else {
         const m = /^[A-Za-z_]\w*/.exec(tpl.slice(i + 1));
         if (m && BUILTINS.includes(m[0])) {
-          push({ expr: m[0], filters: [] });
+          push([{ expr: m[0], filters: [] }]);
           i += 1 + m[0].length;
         } else {
           lit += '$';
@@ -277,6 +332,8 @@
     return parts;
   }
 
+  // ctx: {match, url, title, select(css) -> text|undefined, trace?: []}
+  // trace records which alternative each ${...} used, for "fell back to URL" hints.
   function renderTemplate(compiled, ctx) {
     let out = '';
     for (const p of compiled) {
@@ -284,20 +341,44 @@
         out += p;
         continue;
       }
-      let v = lookup(p.expr, ctx);
-      for (const f of p.filters) v = applyFilter(v, f);
-      out += v == null ? '' : String(v);
+      let used = -1;
+      for (let k = 0; k < p.alts.length; k++) {
+        const a = p.alts[k];
+        let v = lookup(a, ctx);
+        for (const f of a.filters) v = applyFilter(v, f);
+        const s = v == null ? '' : String(v);
+        if (s.trim() !== '') {
+          out += s;
+          used = k;
+          break;
+        }
+      }
+      if (ctx.trace) ctx.trace.push({ used, alts: p.alts.length, source: used >= 0 ? describeSource(p.alts[used]) : null });
     }
     return out;
+  }
+
+  function describeSource(a) {
+    if (a.lit !== undefined) return 'text';
+    if (a.sel !== undefined) return 'page';
+    if (a.expr === 'title') return 'title';
+    return 'url';
+  }
+
+  function usesPage(compiled) {
+    return Boolean(compiled) && compiled.some((p) => typeof p !== 'string' && p.alts.some((a) => a.sel !== undefined));
   }
 
   function checkVars(compiled, re, where) {
     const groups = re ? (re.source.match(/\(\?<([A-Za-z_]\w*)>/g) || []).map((g) => g.slice(3, -1)) : [];
     for (const p of compiled) {
       if (typeof p === 'string') continue;
-      const e = p.expr;
-      if (/^\d+$/.test(e) || e === '&' || e.startsWith('q.') || BUILTINS.includes(e) || groups.includes(e)) continue;
-      throw new Error('unknown variable "' + e + '" in ' + where);
+      for (const a of p.alts) {
+        if (a.lit !== undefined || a.sel !== undefined) continue;
+        const e = a.expr;
+        if (/^\d+$/.test(e) || e === '&' || e.startsWith('q.') || BUILTINS.includes(e) || groups.includes(e)) continue;
+        throw new Error('unknown variable "' + e + '" in ' + where);
+      }
     }
   }
 
@@ -339,6 +420,7 @@
     if (title) {
       rule.title = compileTemplate(title);
       checkVars(rule.title, re, 'title');
+      rule.usesPage = usesPage(rule.title);
     }
     for (const o of opts) {
       if (!o.trim()) continue;
@@ -382,10 +464,17 @@
   }
 
   // Apply a compiled rule (or a manual override, which has no re) to a page.
+  // page: {url, title, select?}. An empty rendered title means "keep the page title".
   function renderRule(rule, page, match) {
-    const ctx = { match: match || [page.url], url: page.url, title: page.title };
+    const trace = [];
+    const ctx = { match: match || [page.url], url: page.url, title: page.title, select: page.select, trace };
     const out = { rule };
-    if (rule.title) out.title = renderTemplate(rule.title, ctx);
+    if (rule.title) {
+      const t = renderTemplate(rule.title, ctx);
+      if (t.trim() !== '') out.title = t;
+    }
+    out.trace = trace;
+    ctx.trace = null;
     if (rule.icon) out.icon = renderTemplate(rule.icon, ctx);
     if (rule.color) {
       const c = renderTemplate(rule.color, ctx);
@@ -406,13 +495,14 @@
 
   // Manual per-tab override {title, icon, color} given as raw template strings.
   function compileOverride(o) {
-    const rule = { line: '(manual)', manual: true };
+    const rule = { line: '(manual)', manual: true, raw: o };
     for (const k of ['title', 'icon', 'color']) {
       if (o && o[k] && String(o[k]).trim()) {
         rule[k] = compileTemplate(String(o[k]).trim());
         checkVars(rule[k], null, k);
       }
     }
+    rule.usesPage = usesPage(rule.title);
     return rule;
   }
 
@@ -465,6 +555,7 @@
     suggestPatterns,
     queryKeys,
     autoColor,
+    usesPage,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TabRules = api;

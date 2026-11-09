@@ -53,6 +53,13 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   return true;
 });
 
+// Clicking the toolbar icon opens the side panel, which stays open while the
+// user clicks around in the page (a popup would close on the first click).
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+chrome.commands.onCommand.addListener((cmd, tab) => {
+  if (cmd === 'open-panel' && tab) chrome.sidePanel.open({ tabId: tab.id }).catch(() => {});
+});
+
 chrome.tabs.onRemoved.addListener((tabId) => chrome.storage.session.remove(ovKey(tabId)));
 
 // SPA navigations (pushState) do not reload the content script.
@@ -66,7 +73,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   for (const t of tabs) {
     if (!t.id || !/^(https?|file):/.test(t.url || '')) continue;
     chrome.scripting
-      .executeScript({ target: { tabId: t.id }, files: ['src/rules.js', 'src/store.js', 'src/content.js'] })
+      .executeScript({ target: { tabId: t.id }, files: ['src/rules.js', 'src/store.js', 'src/picker.js', 'src/content.js'] })
       .catch(() => {});
   }
 });

@@ -11,8 +11,11 @@ const EXT = path.resolve(__dirname, '..');
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#09f"/></svg>';
 const PAGE = `<!doctype html><html><head><title>Original</title>
 <link rel="icon" href="/fav.svg"></head><body>
+<p>Owner: <span class="owner">Alice</span></p>
 <script>
   setTimeout(() => { document.title = 'Changed by page'; }, 300);
+  // simulates an SPA that renders its content late
+  setTimeout(() => { const h = document.createElement('h1'); h.className = 'env-name'; h.textContent = '  Env  One '; document.body.prepend(h); }, 1200);
   window.go = (q) => history.pushState({}, '', '/app?' + q);
 </script></body></html>`;
 
@@ -47,13 +50,15 @@ async function waitFor(fn, what, ms = 4000) {
     const sw = await swTarget.worker();
     const setRules = (text) => sw.evaluate((t) => TabStore.saveRulesText(t), text);
 
-    await setRules('*[?&]env=(*).baidu.com* => $1 ; color=auto\n*://*/* => [${q.env|default:prod}] $title');
+    await setRules('*[?&]env=(*).baidu.com* => ${sel:"h1.env-name" || 1} ; color=auto\n*://*/* => [${q.env|default:prod}] $title');
     const page = await browser.newPage();
     await page.goto(base + '/app?id=3&env=sandbox01.baidu.com&x=1');
 
-    await waitFor(async () => (await page.title()) === 'sandbox01', 'glob rename');
+    await waitFor(async () => (await page.title()) === 'sandbox01', 'URL fallback before the element exists');
     await sleep(600); // page rewrites its own title at 300ms
     assert.equal(await page.title(), 'sandbox01', 'title survives page rewrite');
+    await waitFor(async () => (await page.title()) === 'Env One', 'page text once the element renders');
+    console.log('ok  ${sel:… || $1}: URL value while loading, page text once rendered');
     const icon = await waitFor(() => page.$eval('link[data-tabmv]', (l) => l.href).catch(() => null), 'favicon');
     assert.match(icon, /^data:image\/png;base64,/);
     assert.equal(await page.$$eval('link[rel~="icon" i]', (ls) => ls.length), 1, 'page favicon disabled');
@@ -82,8 +87,31 @@ async function waitFor(fn, what, ms = 4000) {
     await waitFor(async () => (await page.title()) === 'Changed by page', 'restore original title');
     console.log('ok  removing rules restores the original title');
 
+    // Side panel flow: pick an element on the page, save as a site rule.
+    const extId = new URL(swTarget.url()).host;
+    // Open the panel in its own window so both it and the page stay visible,
+    // like the real side panel next to the page.
+    const panelUrl = 'chrome-extension://' + extId + '/src/panel.html?tab=' + tabId;
+    await sw.evaluate((url) => chrome.windows.create({ url, type: 'popup', width: 420, height: 1000 }), panelUrl);
+    const panel = await (await browser.waitForTarget((t) => t.url() === panelUrl)).page();
+    await panel.setViewport({ width: 400, height: 1100 });
+    await panel.waitForSelector('#pick:not([disabled])');
+    await panel.click('#pick');
+    await sleep(200);
+    const box = await page.$eval('span.owner', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    await page.mouse.move(box.x, box.y);
+    await page.mouse.click(box.x, box.y);
+    await panel.waitForFunction(() => document.querySelector('#sources li .detail')?.textContent === 'span.owner', { timeout: 5000 });
+    await panel.waitForFunction(() => document.getElementById('pvTitle').textContent === 'Alice');
+    const summary = await panel.$eval('#summary', (e) => e.textContent);
+    assert.match(summary, /127\.0\.0\.1:\d+ 的任何页面.*页面上「Alice」那段文字/);
+    await panel.click('#save');
+    await waitFor(async () => (await page.title()) === 'Alice', 'rule saved from the panel');
+    const first = (await sw.evaluate(() => TabStore.loadRulesText())).split('\n')[0];
+    assert.match(first, /^\*:\/\/127\.0\.0\.1:\d+\/\* => \$\{sel:"span\.owner"\}$/);
+    console.log('ok  panel: pick element on page -> preview -> save rule:', first);
+
     if (process.env.SHOTS) {
-      const extId = new URL(swTarget.url()).host;
       await setRules((await sw.evaluate(() => TabStore.DEFAULT_RULES)) + '\n/browse\\/(?<key>[A-Z]+-\\d+)/ => $<key> ${title|s/ - Jira$//} ; icon=🐞');
       const opt = await browser.newPage();
       await opt.setViewport({ width: 1000, height: 1300 });
@@ -91,11 +119,19 @@ async function waitFor(fn, what, ms = 4000) {
       await opt.goto('chrome-extension://' + extId + '/src/options.html');
       await sleep(500);
       await opt.screenshot({ path: path.join(process.env.SHOTS, 'options.png') });
-      const pop = await browser.newPage();
-      await pop.setViewport({ width: 404, height: 520 });
-      await pop.goto('chrome-extension://' + extId + '/src/popup.html');
-      await sleep(500);
-      await pop.screenshot({ path: path.join(process.env.SHOTS, 'popup.png') });
+      await panel.reload();
+      await panel.waitForSelector('#pick:not([disabled])');
+      await panel.click('#pick');
+      await sleep(1500); // let the late <h1> render, then re-measure
+      Object.assign(box, await page.$eval('span.owner', (e) => { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }));
+      await page.mouse.move(box.x, box.y);
+      await page.mouse.click(box.x, box.y);
+      await panel.waitForFunction(() => document.querySelector('#sources li .detail'));
+      await panel.evaluate(() => [...document.querySelectorAll('#urlChips .chip')].find((b) => b.textContent.startsWith('env'))?.click());
+      await sleep(300);
+      await panel.evaluate(() => [...document.querySelectorAll('#colors button')].find((b) => b.title === '自动')?.click());
+      await sleep(600);
+      await panel.screenshot({ path: path.join(process.env.SHOTS, 'panel.png'), fullPage: true });
       const fav = await page.$eval('link[data-tabmv]', (l) => l.href);
       require('node:fs').writeFileSync(path.join(process.env.SHOTS, 'favicon.png'), Buffer.from(fav.split(',')[1], 'base64'));
     }

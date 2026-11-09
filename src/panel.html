@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>tabmv</title>
+  <link rel="stylesheet" href="ui.css" />
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <div class="tab-preview" title="保存后标签会长这样">
+    <img id="pvIcon" alt="" />
+    <span id="pvTitle">…</span>
+  </div>
+  <div id="now" class="now"></div>
+  <div id="blocked" class="card warn" hidden>这个页面（浏览器设置页、扩展商店等）不允许扩展修改，换一个普通网页试试。</div>
+
+  <section>
+    <h3><span class="step">1</span>标签显示什么</h3>
+    <ol id="sources" class="sources"></ol>
+    <div class="add">
+      <button id="pick" class="primary">👆 从页面上点选文字</button>
+      <button id="addText">✏️ 自己写</button>
+      <button id="addTitle">📄 原标题</button>
+    </div>
+    <div id="urlChips" class="chips"></div>
+    <p class="hint">从上往下试，第一个有值的就用。页面还没加载完、或者找不到那段文字时，会先用下一个；加载好后自动换回来。</p>
+  </section>
+
+  <section>
+    <h3><span class="step">2</span>样式</h3>
+    <div id="formats" class="seg"></div>
+  </section>
+
+  <section>
+    <h3><span class="step">3</span>图标</h3>
+    <div class="sub">色点</div>
+    <div id="colors" class="swatches"></div>
+    <div class="sub">图标</div>
+    <div id="icons" class="swatches"></div>
+    <input id="iconCustom" type="text" placeholder="其他 emoji、1–2 个字，或图片网址" />
+  </section>
+
+  <section>
+    <h3><span class="step">4</span>用在哪些页面</h3>
+    <div id="scopes" class="scopes"></div>
+    <input id="customPattern" type="text" class="mono" hidden />
+    <div id="scopeCheck" class="sub"></div>
+  </section>
+
+  <div id="summary" class="card summary"></div>
+  <label id="replaceRow" class="check" hidden><input id="replace" type="checkbox" /> <span id="replaceText"></span></label>
+  <div class="actions">
+    <button id="save" class="primary big">保存</button>
+    <button id="reset">恢复原样</button>
+    <span id="msg"></span>
+  </div>
+
+  <details id="adv">
+    <summary>高级：规则文本</summary>
+    <textarea id="ruleText" class="mono" rows="3" spellcheck="false"></textarea>
+    <div id="advNote" class="sub"></div>
+  </details>
+  <p class="footer"><a id="openOptions" href="#">管理全部规则 →</a></p>
+
+  <script src="rules.js"></script>
+  <script src="store.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

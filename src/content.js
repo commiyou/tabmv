@@ -134,9 +134,39 @@
     setIconLink(href);
   }
 
+  // ---------- page content ----------
+  // ${sel:...} reads live page text. Until the element exists (page still
+  // loading, SPA not rendered yet) the template falls back to its next option,
+  // and a throttled body observer re-renders once the element shows up.
+  function select(css) {
+    try {
+      return TabPicker.textOf(document.querySelector(css));
+    } catch (_) {
+      return undefined;
+    }
+  }
+
+  let bodyMo = null;
+  let bodyTimer = 0;
+  function watchBody(on) {
+    if (on && !bodyMo && document.body) {
+      bodyMo = new MutationObserver(() => {
+        if (bodyTimer) return;
+        bodyTimer = setTimeout(() => {
+          bodyTimer = 0;
+          apply();
+        }, 250);
+      });
+      bodyMo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    } else if (!on && bodyMo) {
+      bodyMo.disconnect();
+      bodyMo = null;
+    }
+  }
+
   // ---------- title ----------
   function compute() {
-    const page = { url: location.href, title: pageTitle };
+    const page = { url: location.href, title: pageTitle, select };
     try {
       if (override) return TabRules.renderRule(override, page);
       return TabRules.evaluate(rules, page);
@@ -151,6 +181,7 @@
     // second <title> that hides the page's real one; wait for DOMContentLoaded.
     if (document.readyState === 'loading' && !document.querySelector('title')) return;
     result = compute();
+    watchBody(Boolean(result && result.rule && result.rule.usesPage));
     const t = result && result.title !== undefined ? result.title : null;
     if (t !== null) {
       wantedTitle = t;
@@ -209,8 +240,34 @@
     if (document.head) apply();
   }
 
+  // Render a candidate rule against this live page for the side panel preview.
+  async function preview(msg) {
+    const page = { url: location.href, title: pageTitle, select };
+    let r;
+    try {
+      if (msg.override) r = TabRules.renderRule(TabRules.compileOverride(msg.override), page);
+      else {
+        const rule = TabRules.compileRule(msg.line);
+        const m = rule.re.exec(rule.field === 'title' ? pageTitle : location.href);
+        if (!m) return { ok: true, matched: false };
+        r = TabRules.renderRule(rule, page, m);
+      }
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+    const iconHref = (r.icon || r.color) && r.icon !== 'none' ? await drawIcon(r).catch(() => null) : null;
+    return { ok: true, matched: true, title: r.title, icon: r.icon, color: r.color, trace: r.trace, iconHref };
+  }
+
   chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     if (msg.type === 'refresh') load();
+    else if (msg.type === 'pick') TabPicker.start();
+    else if (msg.type === 'stopPick') TabPicker.stop();
+    else if (msg.type === 'preview') {
+      preview(msg).then(reply);
+      return true;
+    }
+    else if (msg.type === 'getIcon') reply(iconHref);
     else if (msg.type === 'getState')
       reply({
         url: location.href,
@@ -219,6 +276,8 @@
         ruleLine: result && result.rule ? result.rule.line : null,
         lineNo: result && result.rule ? result.rule.lineNo : null,
         manual: Boolean(override),
+        override: override ? override.raw : null,
+        icon: iconHref,
       });
   });
   TabStore.onRulesChanged(load);

@@ -80,3 +80,31 @@ test('formatRule round-trips through compileRule', () => {
   assert.equal(r.title, 'x;y');
   assert.equal(r.icon, '🔥');
 });
+
+test('page content with fallback: sel -> URL -> title', () => {
+  const { rules } = R.parseRules('*[?&]env=(*).baidu.com* => ${sel:"h1.env" | trim || 1 || title}');
+  const url = 'http://h/app?env=qa3.baidu.com&x=1';
+  const dom = { 'h1.env': '  QA-3 (shared)  ' };
+  const select = (css) => dom[css];
+  const loaded = R.evaluate(rules, { url, title: 'App', select });
+  assert.equal(loaded.title, 'QA-3 (shared)');
+  assert.equal(loaded.trace[0].source, 'page');
+  const loading = R.evaluate(rules, { url, title: 'App', select: () => undefined });
+  assert.equal(loading.title, 'qa3');
+  assert.deepEqual([loading.trace[0].used, loading.trace[0].source], [1, 'url']);
+  assert.equal(loading.rule.usesPage, true);
+});
+
+test('m/re/ extracts part of the text and fails over when it does not match', () => {
+  const tpl = '*://*/* => #${sel:.issue|m/#(\\d+)/ || q.id || "?"} $title';
+  const { rules } = R.parseRules(tpl);
+  const page = (txt, url = 'https://x.com/i?id=7') => ({ url, title: 'T', select: () => txt });
+  assert.equal(R.evaluate(rules, page('Issue #128 open')).title, '#128 T');
+  assert.equal(R.evaluate(rules, page('no number')).title, '#7 T');
+  assert.equal(R.evaluate(rules, page(undefined, 'https://x.com/')).title, '#? T');
+});
+
+test('empty result keeps the page title', () => {
+  const { rules } = R.parseRules('*://*/* => ${sel:h1 || q.nope}');
+  assert.equal(R.evaluate(rules, { url: 'https://a.com/', title: 'Home' }).title, undefined);
+});

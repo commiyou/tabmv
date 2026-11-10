@@ -1,6 +1,6 @@
 // Upload a zip to the Chrome Web Store (API v2) and submit it for review.
 //
-//   node scripts/cws-publish.cjs dist/tabmv-1.0.0.zip [--upload-only]
+//   node scripts/cws-publish.cjs dist/telltab-1.0.0.zip [--upload-only]
 //
 // Environment:
 //   CWS_PUBLISHER_ID, CWS_EXTENSION_ID          required

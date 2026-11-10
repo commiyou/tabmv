@@ -1,5 +1,5 @@
 /*
- * tabmv rule engine. Pure functions, no chrome.* APIs, so the same file runs in
+ * Telltab rule engine. Pure functions, no chrome.* APIs, so the same file runs in
  * content scripts, extension pages, the service worker and Node tests.
  *
  * Rule line:   <pattern> => <title template> [; icon=<v>] [; color=<v>]

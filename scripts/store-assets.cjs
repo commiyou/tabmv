@@ -14,7 +14,7 @@ const COPY = {
     head: 'Know every tab at a glance',
     sub: 'Name tabs from page text, URL parts and the original title. Color each environment.',
     before: 'Before',
-    after: 'With tabmv',
+    after: 'With Telltab',
     tabs: ['Dashboard', 'Dashboard', 'Dashboard', 'Order detail'],
     renamed: [['sandbox01', '#d93025'], ['qa3', '#188038'], ['prod · Dashboard', '#1a73e8'], ['#4211 Alice', '#9334e6']],
     tile: 'Rename tabs by URL & page text',
@@ -24,7 +24,7 @@ const COPY = {
     head: '每个标签，一眼认出',
     sub: '用页面文字、网址片段和原标题组合标签名，每个环境一个颜色。',
     before: '之前',
-    after: '用了 tabmv',
+    after: '用了 Telltab',
     tabs: ['控制台', '控制台', '控制台', '订单详情'],
     renamed: [['sandbox01', '#d93025'], ['qa3', '#188038'], ['prod · 控制台', '#1a73e8'], ['#4211 Alice', '#9334e6']],
     tile: '按网址和页面内容重命名标签',
@@ -73,7 +73,7 @@ const strip = (tabs) => `<div class="strip">${tabs.map(([t, c], i) => `<div clas
       </div>`, `screenshot-2${c.suffix}.png`);
     await render(440, 280, `
       <div style="height:280px;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 28px;background:linear-gradient(135deg,#4c8df6,#1a5fd0);color:#fff">
-        <div style="display:flex;align-items:center;gap:14px"><img src="${img('icons/icon128.png')}" style="width:64px"><span style="font-size:40px;font-weight:700">tabmv</span></div>
+        <div style="display:flex;align-items:center;gap:14px"><img src="${img('icons/icon128.png')}" style="width:64px"><span style="font-size:40px;font-weight:700">Telltab</span></div>
         <div style="font-size:20px;line-height:1.35">${c.tile}</div>
       </div>`, `promo-small${c.suffix}.png`);
   }

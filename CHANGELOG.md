@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Renamed from tabmv to **Telltab** (repository: https://github.com/commiyou/telltab). Your saved rules are kept; reload the extension and any open tabs after updating.
+
 ## 1.0.0
 
 First public release.

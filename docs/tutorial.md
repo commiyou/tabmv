@@ -1,4 +1,4 @@
-# tabmv tutorial
+# Telltab tutorial
 
 **English** · [简体中文](tutorial.zh-CN.md)
 
@@ -8,7 +8,7 @@ Five short examples take you from "rename one tab" to "write rules by hand". Aft
 
 1. Install the extension (see the [README](../README.md#install)).
 2. Open a normal web page. Browser settings and the Web Store cannot be changed by extensions; the panel tells you when you are on such a page.
-3. Click the tabmv icon or press `Alt+Shift+R`. The side panel opens.
+3. Click the Telltab icon or press `Alt+Shift+R`. The side panel opens.
 
 From top to bottom the panel shows:
 
@@ -45,7 +45,7 @@ Your test environment URLs look like `http://host/app?id=3&env=sandbox01.baidu.c
 
 4. Leave **Apply to** at "All pages on …" and click **Save rule**.
 
-Every page on that site now shows the part of `env` before the first dot. tabmv finds the parameter by name, so its position in the URL does not matter.
+Every page on that site now shows the part of `env` before the first dot. Telltab finds the parameter by name, so its position in the URL does not matter.
 
 > Mix pieces and text freely: type `[` before a piece and `] ` after it to get names like `[sandbox01] Original title`.
 
@@ -151,6 +151,6 @@ Without parentheses every `*` captures, like `zmv -W`: `https://*.x.com/*/issues
 
 **How do I turn a rule off?** Click "Pause this rule" in the panel, or put `#` in front of it on the rules page.
 
-**The page keeps changing its own title.** tabmv changes it back, and if the page rewrites it more than about 15 times in 2 seconds, tabmv pauses for 10 seconds instead of fighting.
+**The page keeps changing its own title.** Telltab changes it back, and if the page rewrites it more than about 15 times in 2 seconds, Telltab pauses for 10 seconds instead of fighting.
 
 **How do I share or back up rules?** The text box on the rules page holds all of them; copy it. Chrome syncs rules between devices signed in to the same account.

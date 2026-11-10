@@ -46,7 +46,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           node -e "const s=require('fs').readFileSync('CHANGELOG.md','utf8');const m=s.split(/^## /m).find(x=>x.startsWith('${{ steps.v.outputs.version }}'));process.stdout.write(m?m.split('\n').slice(1).join('\n').trim():'')" > notes.md
-          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "tabmv $GITHUB_REF_NAME" --notes-file notes.md
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "Telltab $GITHUB_REF_NAME" --notes-file notes.md
 
       # Option A: service account key (JSON) in CWS_SERVICE_ACCOUNT_KEY.
       - name: Service account token
@@ -63,7 +63,7 @@ jobs:
         if: env.CWS_EXTENSION_ID != '' && (github.ref_type == 'tag' || inputs.publish)
         env:
           CWS_ACCESS_TOKEN: ${{ steps.sa.outputs.access_token }}
-        run: node scripts/cws-publish.cjs dist/tabmv-${{ steps.v.outputs.version }}.zip
+        run: node scripts/cws-publish.cjs dist/telltab-${{ steps.v.outputs.version }}.zip
 
       - name: Store publishing skipped
         if: env.CWS_EXTENSION_ID == ''

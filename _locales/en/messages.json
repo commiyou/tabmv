@@ -1,12 +1,12 @@
 {
   "extName": {
-    "message": "tabmv – Rename Tabs by URL & Page Text"
+    "message": "Telltab – Rename Tabs by URL & Page Text"
   },
   "extDesc": {
     "message": "Name tabs from page text, URL parts and the original title, and color their icons. zmv-style glob and regex rules."
   },
   "actionTitle": {
-    "message": "tabmv: rename this tab"
+    "message": "Telltab: rename this tab"
   },
   "cmdOpen": {
     "message": "Open the rename panel"
@@ -318,7 +318,7 @@
     "message": ": "
   },
   "o_title": {
-    "message": "tabmv rules"
+    "message": "Telltab rules"
   },
   "o_intro": {
     "message": "The side panel covers everyday use; this page is for editing many rules at once. One rule per line: <code>URL match =&gt; tab name [; icon=…] [; color=…]</code>. The first matching line wins, and lines starting with <code>#</code> are comments. ⌘/Ctrl+S saves."
@@ -447,6 +447,6 @@
     "message": "a CSS color or <code>auto</code> (a stable color from capture 1); with color alone, a dot is added to the original icon"
   },
   "tutorialUrl": {
-    "message": "https://github.com/commiyou/tabmv/blob/main/docs/tutorial.md"
+    "message": "https://github.com/commiyou/telltab/blob/main/docs/tutorial.md"
   }
 }

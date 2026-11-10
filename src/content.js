@@ -5,6 +5,8 @@
   // Reloading or updating the extension leaves the old content script running
   // ("orphaned") next to the newly injected one. Two copies fighting over
   // document.title froze pages, so the new copy tells any old copy to stop.
+  // These identifiers keep the project's first name (tabmv) on purpose: copies of
+  // older versions still running in open pages only understand these names.
   const TAKEOVER = 'tabmv:takeover';
   document.dispatchEvent(new CustomEvent(TAKEOVER));
   let dead = false;
@@ -40,7 +42,7 @@
     if (writes.length >= 15) {
       backoffUntil = now + 10000;
       writes.length = 0;
-      console.warn('[tabmv] this page keeps changing its title or icon; pausing for 10s');
+      console.warn('[telltab] this page keeps changing its title or icon; pausing for 10s');
       return false;
     }
     writes.push(now);
@@ -216,7 +218,7 @@
       if (override) return TabRules.renderRule(override, page);
       return TabRules.evaluate(rules, page);
     } catch (e) {
-      console.warn('[tabmv]', e);
+      console.warn('[telltab]', e);
       return null;
     }
   }
@@ -289,7 +291,7 @@
       const ov = await chrome.runtime.sendMessage({ type: 'getOverride' });
       override = ov ? TabRules.compileOverride(ov) : null;
     } catch (e) {
-      console.warn('[tabmv]', e);
+      console.warn('[telltab]', e);
     }
     if (document.head) apply();
   }

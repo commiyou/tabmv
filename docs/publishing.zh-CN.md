@@ -11,7 +11,7 @@
 推送标签后，GitHub Actions 的 **Release** 工作流会：
 
 1. 跑一遍 CI（单元测试、语法检查、打包、英文和中文界面的浏览器测试）。
-2. 打包 `dist/tabmv-<版本>.zip`，检查标签和版本号一致。
+2. 打包 `dist/telltab-<版本>.zip`，检查标签和版本号一致。
 3. 创建 GitHub Release，附上 zip。
 4. 如果配置了商店密钥，把 zip 上传到 Chrome 应用商店并提交审核。没配置时会跳过这一步，并在运行记录里提示。
 
@@ -24,7 +24,7 @@ Google 要求第一次上架在开发者后台手动完成，之后的版本才�
 1. 注册 [Chrome 应用商店开发者账号](https://chrome.google.com/webstore/devconsole)（一次性 5 美元），并给这个 Google 账号打开两步验证。
 2. 在后台点“新建内容”，上传 Release 里的 zip（或本地 `npm run build` 的结果）。
 3. 填写**商品详情**：名称和描述可以直接用 [store/listing.zh-CN.md](../store/listing.zh-CN.md) 和 [store/listing.en.md](../store/listing.en.md)；截图和宣传图用 `npm run store-assets` 生成在 `store/` 里的图片；图标用 `icons/icon128.png`。
-4. 填写**隐私权**：单一用途说明、每个权限的理由、数据使用声明都在 listing 文件里；隐私政策网址填 `https://github.com/commiyou/tabmv/blob/main/PRIVACY.md`。
+4. 填写**隐私权**：单一用途说明、每个权限的理由、数据使用声明都在 listing 文件里；隐私政策网址填 `https://github.com/commiyou/telltab/blob/main/PRIVACY.md`。
 5. 提交审核。通过后记下：
    - **扩展 ID**：后台商品页上的 32 位字母。
    - **发布者 ID**：后台“发布者 → 设置”里。
@@ -57,7 +57,7 @@ Google 要求第一次上架在开发者后台手动完成，之后的版本才�
 ```sh
 npm run build
 CWS_PUBLISHER_ID=… CWS_EXTENSION_ID=… CWS_CLIENT_ID=… CWS_CLIENT_SECRET=… CWS_REFRESH_TOKEN=… \
-  node scripts/cws-publish.cjs dist/tabmv-1.0.1.zip            # 加 --upload-only 只上传不提交审核
+  node scripts/cws-publish.cjs dist/telltab-1.0.1.zip            # 加 --upload-only 只上传不提交审核
 ```
 
 脚本只用 Node 自带的 `fetch`，调用的是 Chrome Web Store API v2（v1 已于 2026 年 10 月停用）。

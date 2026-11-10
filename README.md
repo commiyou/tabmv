@@ -1,4 +1,4 @@
-# tabmv
+# Telltab
 
 **English** · [简体中文](README.zh-CN.md)
 
@@ -13,13 +13,13 @@ A Chrome extension that renames tabs and recolors their icons. A tab name can mi
 
 ## Why
 
-When ten tabs all say "Dashboard" or "Order detail", you cannot tell the QA environment from production, or one ticket from another. tabmv puts the part you care about into the tab title: the environment from the URL, the ticket number from the page, a fixed label for one tab.
+When ten tabs all say "Dashboard" or "Order detail", you cannot tell the QA environment from production, or one ticket from another. Telltab puts the part you care about into the tab title: the environment from the URL, the ticket number from the page, a fixed label for one tab.
 
 ## Install
 
-tabmv is not in the Chrome Web Store yet. Install it from a release:
+Telltab is not in the Chrome Web Store yet. Install it from a release:
 
-1. Download `tabmv-<version>.zip` from [Releases](https://github.com/commiyou/tabmv/releases) and unzip it (or clone this repo).
+1. Download `telltab-<version>.zip` from [Releases](https://github.com/commiyou/telltab/releases) and unzip it (or clone this repo).
 2. Open `chrome://extensions` and turn on **Developer mode** (top right).
 3. Click **Load unpacked** and choose the unzipped folder.
 
@@ -27,7 +27,7 @@ Needs Chrome 116 or later. To update, unzip the new release over the old folder 
 
 ## Use it in one minute
 
-1. Open any page and click the tabmv icon (or press `Alt+Shift+R`). A side panel opens.
+1. Open any page and click the Telltab icon (or press `Alt+Shift+R`). A side panel opens.
 2. Type a name in **Tab name**. Or insert pieces: **👆 Text on the page** (then click the text), **🔗 Part of the URL** (then click a part), **📄 Original title**.
 3. Click a piece to keep only part of it (before or after a `.`, or a regex), and to choose what to show **if missing**.
 4. Pick where it applies: this tab only, this site, this path, or any URL with a given parameter.
@@ -61,7 +61,7 @@ The full syntax is in the [tutorial](docs/tutorial.md#5-rule-text) and on the ru
 
 ## Privacy
 
-tabmv has no server and sends nothing anywhere. Rules are stored with `chrome.storage.sync`, so Chrome syncs them between your own devices. See [PRIVACY.md](PRIVACY.md).
+Telltab has no server and sends nothing anywhere. Rules are stored with `chrome.storage.sync`, so Chrome syncs them between your own devices. See [PRIVACY.md](PRIVACY.md).
 
 ## Development
 
@@ -69,7 +69,7 @@ tabmv has no server and sends nothing anywhere. Rules are stored with `chrome.st
 npm ci
 npm test            # rule engine unit tests (Node only)
 npm run check       # syntax and JSON checks
-npm run build       # dist/tabmv-<version>.zip
+npm run build       # dist/telltab-<version>.zip
 CHROME=".../Google Chrome for Testing" npm run e2e   # real-browser test
 ```
 

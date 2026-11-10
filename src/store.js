@@ -9,7 +9,7 @@
   // Shown until the user saves anything. Only comments, so nothing changes
   // until a rule is written on purpose.
   const DEFAULT_RULES_ZH = [
-    '# tabmv 规则：一行一条，从上到下第一条匹配的生效。平时用侧边栏就行，这里方便批量编辑。',
+    '# Telltab 规则：一行一条，从上到下第一条匹配的生效。平时用侧边栏就行，这里方便批量编辑。',
     '#   网址匹配 => 标签名 [; icon=…] [; color=…]',
     '# 标签名里 {…} 是一段可变内容，其余照原样显示：',
     '#   {page ".env-name"} 页面上的文字   {?env} 网址参数   {host[1]} {path[2]} 网址的某一段',
@@ -23,7 +23,7 @@
     '# *://*.example.com/* => [{page ".env-name" or ?env before "."}] {title}',
   ].join('\n');
   const DEFAULT_RULES_EN = [
-    '# tabmv rules: one per line, the first matching line wins. The side panel is enough for',
+    '# Telltab rules: one per line, the first matching line wins. The side panel is enough for',
     '# everyday use; this page is for editing many rules at once.',
     '#   URL match => tab name [; icon=…] [; color=…]',
     '# In the tab name, {…} is filled in per page and everything else is shown as is:',

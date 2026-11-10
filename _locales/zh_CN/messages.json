@@ -1,12 +1,12 @@
 {
   "extName": {
-    "message": "tabmv – 按网址和页面内容重命名标签"
+    "message": "Telltab – 按网址和页面内容重命名标签"
   },
   "extDesc": {
     "message": "用页面上的文字、网址里的片段和原标题组合出标签名，还能换图标颜色。支持 zmv 风格的 glob 和正则。"
   },
   "actionTitle": {
-    "message": "tabmv：给这个标签改名"
+    "message": "Telltab：给这个标签改名"
   },
   "cmdOpen": {
     "message": "打开改名面板"
@@ -318,7 +318,7 @@
     "message": "："
   },
   "o_title": {
-    "message": "tabmv 规则"
+    "message": "Telltab 规则"
   },
   "o_intro": {
     "message": "平时用侧边栏就够了，这里给需要批量编辑的人。每行一条：<code>网址匹配 =&gt; 标签名 [; icon=…] [; color=…]</code>，从上到下第一条匹配的生效，<code>#</code> 开头为注释。⌘/Ctrl+S 保存。"
@@ -447,6 +447,6 @@
     "message": "CSS 颜色或 <code>auto</code>（按第 1 个捕获组算出固定颜色）；只给 color 时在原图标角上加色点"
   },
   "tutorialUrl": {
-    "message": "https://github.com/commiyou/tabmv/blob/main/docs/tutorial.zh-CN.md"
+    "message": "https://github.com/commiyou/telltab/blob/main/docs/tutorial.zh-CN.md"
   }
 }

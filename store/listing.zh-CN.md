@@ -1,6 +1,6 @@
 # Chrome 应用商店商品信息（简体中文）
 
-**名称**：tabmv – 按网址和页面内容重命名标签（来自 `_locales/zh_CN/messages.json`）
+**名称**：Telltab – 按网址和页面内容重命名标签（来自 `_locales/zh_CN/messages.json`）
 
 **摘要**（manifest description，≤ 132 字符）：用页面上的文字、网址里的片段和原标题组合出标签名，还能换图标颜色。支持 zmv 风格的 glob 和正则。
 
@@ -8,7 +8,7 @@
 
 ## 详细说明
 
-十个标签都叫“控制台”？tabmv 把你关心的那部分放进标签名。
+十个标签都叫“控制台”？Telltab 把你关心的那部分放进标签名。
 
 • 用自己写的文字、页面上的文字、网址里的任意一段和原标题，自由组合出标签名。
 • 点一下就能选中页面上的文字。页面还没加载完时，可以先用网址里的内容顶上，文字出现后自动换回来。
@@ -20,6 +20,6 @@
 
 例：`*[?&]env=(*).baidu.com* => {1} ; color=auto` 会把 `…?env=sandbox01.baidu.com` 的标签显示成 “sandbox01”，并配上它自己的颜色。
 
-不需要账号，没有服务器，不追踪。开源：https://github.com/commiyou/tabmv
+不需要账号，没有服务器，不追踪。开源：https://github.com/commiyou/telltab
 
 （隐私权标签页里的单一用途、权限理由和数据使用说明每个商品只填一份，内容见 [listing.en.md](listing.en.md)。）

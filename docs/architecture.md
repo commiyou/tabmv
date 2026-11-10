@@ -70,7 +70,7 @@ The manifest injects it at `document_start` together with `rules.js`, `store.js`
 
 A rename goes like this:
 
-1. **Take over**: it first dispatches a `tabmv:takeover` event. After an extension update or reload, the old script keeps running in open pages ("orphaned"); on this event it restores the title and stops, so two copies never fight over the title.
+1. **Take over**: it first dispatches a `tabmv:takeover` event (internal names such as this one and `data-tabmv` keep the project's first name, tabmv, so older copies still understand them). After an extension update or reload, the old script keeps running in open pages ("orphaned"); on this event it restores the title and stops, so two copies never fight over the title.
 2. **load**: read the rule text, ask background for this tab's own rename (`getOverride`), compile.
 3. **apply**: `compute()` evaluates, then sets `document.title` and calls `applyIcon`. `pageTitle` always holds the page's own title; `{title}` uses it, so prefixes never stack up.
 4. **Keep it**: a MutationObserver on `<head>` re-applies on the next macrotask when the page changes its title or icon. A macrotask, so a page that fights back cannot trap us in a microtask loop; `mayWrite()` adds a limit of 15 writes in 2 seconds, then pauses for 10 seconds.

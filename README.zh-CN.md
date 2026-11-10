@@ -1,4 +1,4 @@
-# tabmv
+# Telltab
 
 [English](README.md) · **简体中文**
 
@@ -13,13 +13,13 @@
 
 ## 解决什么问题
 
-十个标签都叫“控制台”“订单详情”时，分不清哪个是测试环境、哪个是线上，哪个是哪张工单。tabmv 把你关心的那部分放进标签名：网址里的环境、页面上的工单号，或者给某个标签起个固定的名字。
+十个标签都叫“控制台”“订单详情”时，分不清哪个是测试环境、哪个是线上，哪个是哪张工单。Telltab 把你关心的那部分放进标签名：网址里的环境、页面上的工单号，或者给某个标签起个固定的名字。
 
 ## 安装
 
-tabmv 暂时还没有上架 Chrome 应用商店，请从 Release 安装：
+Telltab 暂时还没有上架 Chrome 应用商店，请从 Release 安装：
 
-1. 在 [Releases](https://github.com/commiyou/tabmv/releases) 下载 `tabmv-<版本>.zip` 并解压（或者直接克隆本仓库）。
+1. 在 [Releases](https://github.com/commiyou/telltab/releases) 下载 `telltab-<版本>.zip` 并解压（或者直接克隆本仓库）。
 2. 打开 `chrome://extensions`，打开右上角的“开发者模式”。
 3. 点“加载已解压的扩展程序”，选择解压出来的文件夹。
 
@@ -27,7 +27,7 @@ tabmv 暂时还没有上架 Chrome 应用商店，请从 Release 安装：
 
 ## 一分钟上手
 
-1. 打开任意网页，点工具栏上的 tabmv 图标（或按 `Alt+Shift+R`），右侧会打开侧边栏。
+1. 打开任意网页，点工具栏上的 Telltab 图标（或按 `Alt+Shift+R`），右侧会打开侧边栏。
 2. 在**标签名**里直接打字；或者插入一段内容：**👆 页面上的文字**（然后去页面上点一下）、**🔗 网址里的一段**（然后点要用的那段）、**📄 原标题**。
 3. 点一下插入的小块，可以只保留其中一部分（比如「.」前面），也可以设置**取不到时**用什么。
 4. 选择**应用于**：只这个标签、这个网站、这个路径，或者任何带某个参数的网址。
@@ -61,7 +61,7 @@ tabmv 暂时还没有上架 Chrome 应用商店，请从 Release 安装：
 
 ## 隐私
 
-tabmv 没有服务器，不向任何地方发送数据。规则保存在 `chrome.storage.sync`，由 Chrome 在你自己的设备之间同步。详见 [PRIVACY.md](PRIVACY.md)。
+Telltab 没有服务器，不向任何地方发送数据。规则保存在 `chrome.storage.sync`，由 Chrome 在你自己的设备之间同步。详见 [PRIVACY.md](PRIVACY.md)。
 
 ## 开发
 
@@ -69,7 +69,7 @@ tabmv 没有服务器，不向任何地方发送数据。规则保存在 `chrome
 npm ci
 npm test            # 规则引擎单元测试，只需要 Node
 npm run check       # 语法和 JSON 检查
-npm run build       # 生成 dist/tabmv-<版本>.zip
+npm run build       # 生成 dist/telltab-<版本>.zip
 CHROME=".../Google Chrome for Testing" npm run e2e   # 在真实浏览器里测试
 ```
 

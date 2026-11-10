@@ -11,7 +11,7 @@
 The **Release** workflow then:
 
 1. Runs CI (unit tests, syntax checks, packaging, browser tests in English and Chinese).
-2. Builds `dist/tabmv-<version>.zip` and checks that the tag matches the version.
+2. Builds `dist/telltab-<version>.zip` and checks that the tag matches the version.
 3. Creates a GitHub Release with the zip.
 4. If the store secrets are set, uploads the zip to the Chrome Web Store and submits it for review. Otherwise it skips this step and leaves a notice in the run.
 
@@ -24,7 +24,7 @@ Google requires the first submission to be made in the Developer Dashboard; late
 1. Register a [Chrome Web Store developer account](https://chrome.google.com/webstore/devconsole) (one-time USD 5 fee) and turn on 2-step verification for that Google account.
 2. Click **New item** and upload the zip from a Release (or from `npm run build`).
 3. Fill in **Store listing**: names and descriptions are in [store/listing.en.md](../store/listing.en.md) and [store/listing.zh-CN.md](../store/listing.zh-CN.md); screenshots and promo tiles come from `npm run store-assets` (written to `store/`); the icon is `icons/icon128.png`.
-4. Fill in **Privacy**: the single-purpose statement, permission justifications and data-use answers are in the listing files; the privacy policy URL is `https://github.com/commiyou/tabmv/blob/main/PRIVACY.md`.
+4. Fill in **Privacy**: the single-purpose statement, permission justifications and data-use answers are in the listing files; the privacy policy URL is `https://github.com/commiyou/telltab/blob/main/PRIVACY.md`.
 5. Submit for review. Afterwards note:
    - the **extension ID** (32 letters, on the item page), and
    - the **publisher ID** (Publisher → Settings).
@@ -57,7 +57,7 @@ While the consent screen is in "Testing" status, refresh tokens expire after 7 d
 ```sh
 npm run build
 CWS_PUBLISHER_ID=… CWS_EXTENSION_ID=… CWS_CLIENT_ID=… CWS_CLIENT_SECRET=… CWS_REFRESH_TOKEN=… \
-  node scripts/cws-publish.cjs dist/tabmv-1.0.1.zip            # --upload-only skips the review submission
+  node scripts/cws-publish.cjs dist/telltab-1.0.1.zip            # --upload-only skips the review submission
 ```
 
 The script uses only Node's built-in `fetch` and the Chrome Web Store API v2 (v1 was shut down in October 2026).

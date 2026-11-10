@@ -1,4 +1,4 @@
-// Packs the extension into dist/tabmv-<version>.zip for the Chrome Web Store.
+// Packs the extension into dist/telltab-<version>.zip for the Chrome Web Store.
 // Checks first that versions agree and both languages have the same messages.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -25,7 +25,7 @@ for (const f of ['manifest.json', ...Object.values(manifest.icons), manifest.bac
   if (!fs.existsSync(path.join(root, f))) fail('missing ' + f);
 }
 
-const out = path.join(root, 'dist', `tabmv-${manifest.version}.zip`);
+const out = path.join(root, 'dist', `telltab-${manifest.version}.zip`);
 fs.mkdirSync(path.dirname(out), { recursive: true });
 if (fs.existsSync(out)) fs.unlinkSync(out);
 execFileSync('zip', ['-qr', '-X', out, 'manifest.json', '_locales', 'src', 'icons', '-x', 'icons/icon.svg', '-x', '*.DS_Store'], { cwd: root, stdio: 'inherit' });
